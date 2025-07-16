@@ -32,7 +32,7 @@ export function AppHeader() {
     <header className="sticky top-0 z-50 w-full border-b bg-white shadow-sm">
       <div className="mx-auto flex h-16 items-center gap-2 px-4 md:max-w-7xl">
         {/* Left: Logo */}
-        <Link href="/dashboard" className="flex items-center mr-2">
+        <Link href={route('dashboard')} className="flex items-center mr-2">
           <AppLogoIcon className="h-8 w-8 text-blue-600" />
         </Link>
 
@@ -43,7 +43,7 @@ export function AppHeader() {
 
         {/* Center: Navigation Icons */}
         <nav className="flex flex-1 justify-center gap-6">
-          <Link href="/dashboard" className="group flex flex-col items-center justify-center px-3 py-1.5 rounded-md hover:bg-gray-100">
+          <Link href={route('dashboard')} className="group flex flex-col items-center justify-center px-3 py-1.5 rounded-md hover:bg-gray-100">
             <Home className="h-6 w-6 text-gray-700 group-hover:text-blue-600" />
           </Link>
           <button className="group flex flex-col items-center justify-center px-3 py-1.5 rounded-md hover:bg-gray-100">
