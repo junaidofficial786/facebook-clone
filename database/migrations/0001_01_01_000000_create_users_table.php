@@ -17,8 +17,16 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            // Profile fields
+            $table->text('bio')->nullable()->comment('User biography');
+            $table->string('profile_pic')->nullable()->comment('Profile picture URL or path');
+            $table->string('cover_pic')->nullable()->comment('Cover picture URL or path');
+            $table->enum('gender', ['male', 'female', 'other', 'prefer_not_to_say'])->nullable();
+            $table->date('birthday')->nullable();
+            $table->string('location')->nullable();
             $table->rememberToken();
             $table->timestamps();
+            $table->softDeletes();
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
