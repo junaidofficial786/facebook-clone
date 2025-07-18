@@ -10,7 +10,7 @@ class PostService
     public static function getFeedPosts()
     {
         $userId = Auth::id();
-        $perPage = 2;
+        $perPage = 5;
         return Post::with([
             'user:id,name,profile_pic',
             'postMedia:id,post_id,media_url',

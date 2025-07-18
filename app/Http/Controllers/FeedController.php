@@ -20,7 +20,7 @@ class FeedController extends Controller
     public function apiIndex(Request $request)
     {
         $userId = Auth::id();
-        $perPage = 2;
+        $perPage = 5;
         $posts = \App\Models\Post::with([
             'user:id,name,profile_pic',
             'postMedia:id,post_id,media_url',
