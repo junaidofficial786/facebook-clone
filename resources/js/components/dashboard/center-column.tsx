@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MessageCircle, ThumbsUp, Bold, Italic, Underline, Image as ImageIcon, X, MoreVertical, Bookmark, EyeOff, Flag, Link2 } from 'lucide-react';
-import CreatePost from '@/components/app/CreatePost';
+import CreatePost from '@/components/dashboard/CreatePost';
 
 export default function CenterColumn() {
     const [editorValue, setEditorValue] = useState('');
