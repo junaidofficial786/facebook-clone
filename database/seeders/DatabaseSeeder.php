@@ -18,6 +18,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Create a specific user
+        $myUser = User::factory()->create([
+            'name' => 'Junaid Hassan',
+            'email' => 'junaidhassan225588@gmail.com',
+            'password' => Hash::make('password'),
+        ]);
+
         // 1. Seed reactions table
         $reactions = [
             ['name' => 'like', 'icon' => '👍'],
@@ -32,6 +39,7 @@ class DatabaseSeeder extends Seeder
         }
         $reactionIds = Reaction::pluck('id')->all();
 
+
         // 2. Create 100 users
         $users = User::factory(100)->create(['password' => Hash::make('password')]);
         $userIds = $users->pluck('id')->all();
@@ -42,6 +50,17 @@ class DatabaseSeeder extends Seeder
             $posts = Post::factory(fake()->numberBetween(4, 5))->create([
                 'user_id' => $user->id,
             ]);
+            // For each post, add 1-10 media (photos)
+            foreach ($posts as $post) {
+                $mediaCount = fake()->numberBetween(1, 10);
+                for ($m = 0; $m < $mediaCount; $m++) {
+                    \App\Models\PostMedia::create([
+                        'post_id' => $post->id,
+                        'media_type' => 'image',
+                        'media_url' => 'https://placehold.co/800x600/png?text=Photo+'.($m+1),
+                    ]);
+                }
+            }
             $allPosts = $allPosts->concat($posts);
         }
 
