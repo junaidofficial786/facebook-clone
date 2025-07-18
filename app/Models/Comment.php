@@ -20,4 +20,8 @@ class Comment extends Model
     public function parent() { return $this->belongsTo(Comment::class, 'parent_id'); }
     public function children() { return $this->hasMany(Comment::class, 'parent_id'); }
     public function commentReactions() { return $this->hasMany(CommentReaction::class); }
+    public function myCommentReaction()
+    {
+        return $this->hasOne(CommentReaction::class)->where('user_id', auth()->id());
+    }
 }

@@ -3,15 +3,15 @@
 use App\Events\PostCreate;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\FeedController;
 
 Route::get('/', function () {
     return redirect()->route('login');
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('feed', function () {
-        return Inertia::render('dashboard');
-    })->name('dashboard');
+    Route::get('feed', FeedController::class)->name('dashboard');
 });
 
 Route::get('/event', function () {

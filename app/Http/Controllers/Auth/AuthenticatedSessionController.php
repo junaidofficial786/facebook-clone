@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Models\Post;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -47,5 +48,29 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerateToken();
 
         return redirect('/');
+    }
+
+    // Helper to get feed posts
+    public static function getFeedPosts()
+    {
+        return Post::with([
+            'user:id,name,profile_pic',
+            'postMedia:id,post_id,media_url',
+            'comments.user:id,name,profile_pic',
+        ])
+        ->withCount('postReactions as reactions_count')
+        ->orderByDesc('created_at')
+        ->take(10)
+        ->get()
+        ->map(function ($post) {
+            $post->created_at_human = $post->created_at->diffForHumans();
+            $post->media = $post->postMedia;
+            // $post->reactions_count = $post->reactions_count;
+            $post->comments = $post->comments->map(function ($comment) {
+                // $comment->user = $comment->user;
+                return $comment;
+            });
+            return $post;
+        });
     }
 }
