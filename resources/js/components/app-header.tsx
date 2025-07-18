@@ -28,6 +28,9 @@ export function AppHeader() {
   const { auth } = page.props;
   const getInitials = useInitials();
 
+  // Determine if /feed is active
+  const isFeedActive = typeof window !== 'undefined' && window.location.pathname.startsWith('/feed');
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white shadow-sm">
       <div className="mx-auto flex h-16 items-center gap-2 px-4 md:max-w-7xl">
@@ -43,8 +46,16 @@ export function AppHeader() {
 
         {/* Center: Navigation Icons */}
         <nav className="flex flex-1 justify-center gap-6">
-          <Link href={route('dashboard')} className="group flex flex-col items-center justify-center px-3 py-1.5 rounded-md hover:bg-gray-100">
-            <Home className="h-6 w-6 text-gray-700 group-hover:text-blue-600" />
+          <Link
+            href={route('dashboard')}
+            className={
+              'group flex flex-col items-center justify-center px-3 py-1.5 rounded-md hover:bg-gray-100 ' +
+              (isFeedActive ? 'bg-blue-50 text-blue-600' : '')
+            }
+          >
+            <Home className={
+              'h-6 w-6 ' + (isFeedActive ? 'text-blue-600' : 'text-gray-700 group-hover:text-blue-600')
+            } />
           </Link>
           <button className="group flex flex-col items-center justify-center px-3 py-1.5 rounded-md hover:bg-gray-100">
             <PlaySquare className="h-6 w-6 text-gray-700 group-hover:text-blue-600" />
