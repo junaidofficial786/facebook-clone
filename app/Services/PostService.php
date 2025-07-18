@@ -21,7 +21,7 @@ class PostService
             },
         ])
         ->withCount('postReactions as reactions_count')
-        ->orderByDesc('created_at')
+        ->orderByDesc('id')
         ->take(10)
         ->get()
         ->map(function ($post) use ($userId) {

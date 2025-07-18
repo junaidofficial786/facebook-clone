@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { usePage } from '@inertiajs/react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -6,11 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MessageCircle, ThumbsUp, Bold, Italic, Underline, Image as ImageIcon, X, MoreVertical, Bookmark, EyeOff, Flag, Link2 } from 'lucide-react';
+import CreatePost from '@/components/app/CreatePost';
 
 export default function CenterColumn() {
     const [editorValue, setEditorValue] = useState('');
     const [media, setMedia] = useState<File | null>(null);
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
     const { posts } = usePage().props as any;
     const [replyingTo, setReplyingTo] = useState<number | null>(null);
 
@@ -32,38 +32,7 @@ export default function CenterColumn() {
 
     return (
         <div className="flex flex-col gap-6">
-            {/* Custom Post Editor */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Create Post</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    {/* Toolbar */}
-                    <div className="flex gap-2 mb-2">
-                        <Button type="button" size="sm" variant="ghost" onClick={() => insertTag('<b>', '</b>')}><Bold className="h-4 w-4" /></Button>
-                        <Button type="button" size="sm" variant="ghost" onClick={() => insertTag('<i>', '</i>')}><Italic className="h-4 w-4" /></Button>
-                        <Button type="button" size="sm" variant="ghost" onClick={() => insertTag('<u>', '</u>')}><Underline className="h-4 w-4" /></Button>
-                        <label className="inline-flex items-center cursor-pointer">
-                            <ImageIcon className="h-4 w-4 mr-1" />
-                            <input type="file" accept="image/*" className="hidden" onChange={e => setMedia(e.target.files?.[0] || null)} />
-                        </label>
-                    </div>
-                    <textarea
-                        ref={textareaRef}
-                        value={editorValue}
-                        onChange={e => setEditorValue(e.target.value)}
-                        placeholder="What's on your mind?"
-                        rows={4}
-                        className="w-full rounded-md border border-input bg-gray-50 p-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-200 resize-none mb-2 shadow-sm"
-                    />
-                    {media && (
-                        <div className="mb-2">
-                            <img src={URL.createObjectURL(media)} alt="Preview" className="max-h-48 rounded-lg border" />
-                        </div>
-                    )}
-                    <Button className="w-full">Post</Button>
-                </CardContent>
-            </Card>
+            <CreatePost />
 
             {/* Posts Feed */}
             {posts && posts.length > 0 ? posts.map((post: any) => (
