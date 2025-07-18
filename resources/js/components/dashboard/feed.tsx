@@ -95,7 +95,7 @@ export default function Feed() {
     }, [fetchMorePosts]);
 
     return (
-        <div ref={feedContainerRef} className="flex flex-col gap-6 h-full min-h-0 overflow-y-auto">
+        <div ref={feedContainerRef} className="flex flex-col gap-6 h-full min-h-0 overflow-y-auto scrollbar-hide">
             <CreatePost />
 
             {posts && posts.length > 0 ? posts.map((post: any) => (
