@@ -7,24 +7,24 @@ use Illuminate\Support\Facades\Auth;
 
 class PostService
 {
-    public static function getFeedPosts()
+    public static function fetchFeedPosts($perPage = 10, $page = null)
     {
         $userId = Auth::id();
-        $perPage = 5;
-        return Post::with([
+        $query = Post::with([
             'user:id,name,profile_pic',
             'postMedia:id,post_id,media_url',
             'comments.user:id,name,profile_pic',
-            'comments.commentReactions', // for likes count
-            'comments.myCommentReaction', // for liked_by_me
+            'comments.commentReactions',
+            'comments.myCommentReaction',
             'postReactions' => function ($q) use ($userId) {
                 $q->where('user_id', $userId);
             },
         ])
         ->withCount('postReactions as reactions_count')
-        ->orderByDesc('id')
-        ->paginate($perPage)
-        ->through(function ($post) use ($userId) {
+        ->orderByDesc('id');
+
+        $paginator = $query->paginate($perPage, ['*'], 'page', $page);
+        $paginator->getCollection()->transform(function ($post) use ($userId) {
             $post->created_at_human = $post->created_at->diffForHumans();
             $post->media = $post->postMedia;
             $post->liked_by_me = $userId ? $post->postReactions->isNotEmpty() : false;
@@ -36,5 +36,11 @@ class PostService
             });
             return $post;
         });
+        return $paginator;
+    }
+
+    public static function getFeedPosts($perPage = 10, $page = null)
+    {
+        return self::fetchFeedPosts($perPage, $page);
     }
 }
