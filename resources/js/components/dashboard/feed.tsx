@@ -24,6 +24,7 @@ export default function Feed() {
     const pageRef = useRef(page);
     const inFlightPages = useRef<Set<number>>(new Set());
     const didLogRef = useRef(false);
+    const feedContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (!didLogRef.current) {
@@ -75,31 +76,26 @@ export default function Feed() {
         inFlightPages.current.delete(nextPage);
     }, []);
 
+    // Scroll listener on feed container
     useEffect(() => {
-        let scrollTimeout: NodeJS.Timeout | null = null;
+        const container = feedContainerRef.current;
+        if (!container) return;
 
         const handleScroll = () => {
-            if (scrollTimeout) clearTimeout(scrollTimeout);
-
-            scrollTimeout = setTimeout(() => {
-                if (
-                    window.innerHeight + window.scrollY + 100 >=
-                    document.documentElement.scrollHeight
-                ) {
-                    fetchMorePosts();
-                }
-            }, 150);
+            if (
+                container.scrollTop + container.clientHeight + 100 >=
+                container.scrollHeight
+            ) {
+                fetchMorePosts();
+            }
         };
 
-        window.addEventListener('scroll', handleScroll);
-        return () => {
-            if (scrollTimeout) clearTimeout(scrollTimeout);
-            window.removeEventListener('scroll', handleScroll);
-        };
+        container.addEventListener('scroll', handleScroll);
+        return () => container.removeEventListener('scroll', handleScroll);
     }, [fetchMorePosts]);
 
     return (
-        <div className="flex flex-col gap-6 h-full min-h-0 overflow-y-auto">
+        <div ref={feedContainerRef} className="flex flex-col gap-6 h-full min-h-0 overflow-y-auto">
             <CreatePost />
 
             {posts && posts.length > 0 ? posts.map((post: any) => (
