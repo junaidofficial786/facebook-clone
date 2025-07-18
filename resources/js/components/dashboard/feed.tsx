@@ -9,7 +9,7 @@ import { MessageCircle, ThumbsUp, X, MoreVertical, Bookmark, EyeOff, Flag, Link2
 import CreatePost from '@/components/dashboard/CreatePost';
 import axios from 'axios';
 
-export default function CenterColumn() {
+export default function Feed() {
     const [editorValue, setEditorValue] = useState('');
     const [media, setMedia] = useState<File | null>(null);
     const { posts: initialPosts } = usePage().props as any;
@@ -99,7 +99,7 @@ export default function CenterColumn() {
     }, [fetchMorePosts]);
 
     return (
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6 h-full min-h-0 overflow-y-auto">
             <CreatePost />
 
             {posts && posts.length > 0 ? posts.map((post: any) => (

@@ -1,6 +1,6 @@
 import AppHeaderLayout from '@/layouts/app/app-header-layout';
 import LeftColumn from '@/components/dashboard/left-column';
-import CenterColumn from '@/components/dashboard/center-column';
+import Feed from '@/components/dashboard/feed';
 import RightColumn from '@/components/dashboard/right-column';
 
 function Dashboard() {
@@ -27,15 +27,15 @@ function Dashboard() {
 
 
     return (
-        <div className="mx-auto flex w-full max-w-7xl gap-6 px-2 min-h-screen" style={{height: '100vh'}}>
+        <div className="flex w-full max-w-7xl gap-6 px-2 min-h-0 h-screen overflow-hidden mx-auto">
             <div className="hidden lg:block w-1/4">
                 <div className="sticky top-24">
                     <LeftColumn />
                 </div>
             </div>
-            <div className="flex-1 min-w-0 flex flex-col h-[calc(100vh-2rem)]" style={{height: 'calc(100vh - 2rem)'}}>
-                <div className="flex-1 overflow-y-auto">
-                    <CenterColumn />
+            <div className="flex-1 min-w-0 flex flex-col h-full min-h-0">
+                <div className="flex-1 min-h-0 h-full">
+                    <Feed />
                 </div>
             </div>
             <div className="hidden xl:block w-1/4">
