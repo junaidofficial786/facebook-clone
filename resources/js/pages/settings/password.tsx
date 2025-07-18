@@ -17,7 +17,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Password() {
+function Password() {
     const passwordInput = useRef<HTMLInputElement>(null);
     const currentPasswordInput = useRef<HTMLInputElement>(null);
 
@@ -48,7 +48,7 @@ export default function Password() {
     };
 
     return (
-        <AppHeaderLayout>
+        <>
             <Head title="Password settings" />
             <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
                 <div className="w-full max-w-md space-y-6">
@@ -121,6 +121,9 @@ export default function Password() {
                     </form>
                 </div>
             </div>
-        </AppHeaderLayout>
+        </>
     );
 }
+
+Password.layout = (page: React.ReactNode) => <AppHeaderLayout>{page}</AppHeaderLayout>;
+export default Password;

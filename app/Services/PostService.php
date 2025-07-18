@@ -10,6 +10,7 @@ class PostService
     public static function getFeedPosts()
     {
         $userId = Auth::id();
+        $perPage = 2;
         return Post::with([
             'user:id,name,profile_pic',
             'postMedia:id,post_id,media_url',
@@ -22,9 +23,8 @@ class PostService
         ])
         ->withCount('postReactions as reactions_count')
         ->orderByDesc('id')
-        ->take(10)
-        ->get()
-        ->map(function ($post) use ($userId) {
+        ->paginate($perPage)
+        ->through(function ($post) use ($userId) {
             $post->created_at_human = $post->created_at->diffForHumans();
             $post->media = $post->postMedia;
             $post->liked_by_me = $userId ? $post->postReactions->isNotEmpty() : false;

@@ -12,6 +12,8 @@ Route::get('/', function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('feed', FeedController::class)->name('dashboard');
+    // API endpoint for infinite scroll
+    Route::get('api/posts', [FeedController::class, 'apiIndex'])->name('api.posts');
 });
 
 Route::get('/event', function () {

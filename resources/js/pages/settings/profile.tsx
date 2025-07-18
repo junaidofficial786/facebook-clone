@@ -16,7 +16,7 @@ type ProfileForm = {
     email: string;
 };
 
-export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: boolean; status?: string }) {
+function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: boolean; status?: string }) {
     const { auth } = usePage<SharedData>().props;
 
     const { data, setData, patch, errors, processing, recentlySuccessful } = useForm<Required<ProfileForm>>({
@@ -33,7 +33,7 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
     };
 
     return (
-        <AppHeaderLayout>
+        <>
             <Head title="Profile settings" />
             <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
                 <div className="w-full max-w-md space-y-6">
@@ -112,6 +112,9 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
                     <DeleteUser />
                 </div>
             </div>
-        </AppHeaderLayout>
+        </>
     );
 }
+
+Profile.layout = (page: React.ReactNode) => <AppHeaderLayout>{page}</AppHeaderLayout>;
+export default Profile;

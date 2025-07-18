@@ -13,9 +13,9 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Appearance() {
+function Appearance() {
     return (
-        <AppHeaderLayout>
+        <>
             <Head title="Appearance settings" />
             <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
                 <div className="w-full max-w-md space-y-6">
@@ -23,6 +23,9 @@ export default function Appearance() {
                     <AppearanceTabs />
                 </div>
             </div>
-        </AppHeaderLayout>
+        </>
     );
 }
+
+Appearance.layout = (page: React.ReactNode) => <AppHeaderLayout>{page}</AppHeaderLayout>;
+export default Appearance;

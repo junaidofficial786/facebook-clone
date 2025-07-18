@@ -1,20 +1,43 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { usePage } from '@inertiajs/react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MessageCircle, ThumbsUp, Bold, Italic, Underline, Image as ImageIcon, X, MoreVertical, Bookmark, EyeOff, Flag, Link2 } from 'lucide-react';
+import { MessageCircle, ThumbsUp, X, MoreVertical, Bookmark, EyeOff, Flag, Link2 } from 'lucide-react';
 import CreatePost from '@/components/dashboard/CreatePost';
+import axios from 'axios';
 
 export default function CenterColumn() {
     const [editorValue, setEditorValue] = useState('');
     const [media, setMedia] = useState<File | null>(null);
-    const { posts } = usePage().props as any;
+    const { posts: initialPosts } = usePage().props as any;
+    const [posts, setPosts] = useState(initialPosts?.data || []);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [replyingTo, setReplyingTo] = useState<number | null>(null);
 
-    // Simple formatting handlers
+    const loadingRef = useRef(loading);
+    const hasMoreRef = useRef(hasMore);
+    const pageRef = useRef(page);
+    const inFlightPages = useRef<Set<number>>(new Set());
+    const didLogRef = useRef(false);
+
+    useEffect(() => {
+        if (!didLogRef.current) {
+            console.log('center-column page');
+            didLogRef.current = true;
+        }
+    }, []);
+
+    useEffect(() => {
+        loadingRef.current = loading;
+        hasMoreRef.current = hasMore;
+        pageRef.current = page;
+    }, [loading, hasMore, page]);
+
     const insertTag = (tag: string, closeTag?: string) => {
         const textarea = textareaRef.current;
         if (!textarea) return;
@@ -30,11 +53,55 @@ export default function CenterColumn() {
         }, 0);
     };
 
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    const fetchMorePosts = useCallback(async () => {
+        const nextPage = pageRef.current + 1;
+
+        if (loadingRef.current || !hasMoreRef.current || inFlightPages.current.has(nextPage)) return;
+
+        inFlightPages.current.add(nextPage);
+        setLoading(true);
+        try {
+            const res = await axios.get(`/api/posts?page=${nextPage}`);
+            setPosts((prev: any[]) => [...prev, ...res.data.data]);
+            setHasMore(res.data.next_page_url !== null);
+            setPage(nextPage);
+            pageRef.current = nextPage;
+        } catch (e) {
+            console.error('Error fetching posts:', e);
+        }
+        setLoading(false);
+        inFlightPages.current.delete(nextPage);
+    }, []);
+
+    useEffect(() => {
+        let scrollTimeout: NodeJS.Timeout | null = null;
+
+        const handleScroll = () => {
+            if (scrollTimeout) clearTimeout(scrollTimeout);
+
+            scrollTimeout = setTimeout(() => {
+                if (
+                    window.innerHeight + window.scrollY + 100 >=
+                    document.documentElement.scrollHeight
+                ) {
+                    fetchMorePosts();
+                }
+            }, 150);
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => {
+            if (scrollTimeout) clearTimeout(scrollTimeout);
+            window.removeEventListener('scroll', handleScroll);
+        };
+    }, [fetchMorePosts]);
+
     return (
         <div className="flex flex-col gap-6">
             <CreatePost />
 
-            {/* Posts Feed */}
             {posts && posts.length > 0 ? posts.map((post: any) => (
                 <Card key={post.id}>
                     <CardHeader className="flex flex-row items-center gap-3 justify-between">
@@ -78,7 +145,6 @@ export default function CenterColumn() {
                         )}
                     </CardContent>
                     <CardFooter className="flex flex-col gap-2">
-                        {/* Like and Comment Counts */}
                         <div className="flex gap-4 items-center mb-1">
                             <Button
                                 variant="ghost"
@@ -93,7 +159,7 @@ export default function CenterColumn() {
                                 {post.comments?.length || 0}
                             </div>
                         </div>
-                        {/* Comments */}
+
                         {post.comments && post.comments.length > 0 && (
                             <div className="mt-2 flex flex-col gap-3">
                                 {post.comments.map((comment: any) => (
@@ -143,12 +209,14 @@ export default function CenterColumn() {
                                 ))}
                             </div>
                         )}
+
                         <Input placeholder="Write a comment..." />
                     </CardFooter>
                 </Card>
-            )) : (
-                <div className="text-center text-muted-foreground py-10">No posts found.</div>
-            )}
+            )) : <div>No posts found.</div>}
+
+            {loading && <div className="text-center py-4 text-muted-foreground">Loading...</div>}
+            {!hasMore && <div className="text-center py-4 text-muted-foreground">No more posts</div>}
         </div>
     );
 }
