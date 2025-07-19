@@ -10,6 +10,7 @@ import CreatePost from '@/components/dashboard/CreatePost';
 import axios from 'axios';
 import LoaderOverlay from '@/components/ui/loader';
 import Toast from '@/components/ui/toast';
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogClose } from '@/components/ui/dialog';
 
 export default function Feed() {
     const [editorValue, setEditorValue] = useState('');
@@ -22,9 +23,10 @@ export default function Feed() {
     const [loading, setLoading] = useState(false);
     const [replyingTo, setReplyingTo] = useState<number | null>(null);
     const [deleting, setDeleting] = useState(false);
-    const [deleteId, setDeleteId] = useState<number|null>(null);
+    const [deleteId, setDeleteId] = useState<number | null>(null);
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
+    const [confirmDeleteId, setConfirmDeleteId] = useState<number|null>(null);
 
     const loadingRef = useRef(loading);
     const hasMoreRef = useRef(hasMore);
@@ -99,6 +101,9 @@ export default function Feed() {
         setDeleteId(null);
     };
 
+    const openDeleteDialog = (postId: number) => setConfirmDeleteId(postId);
+    const closeDeleteDialog = () => setConfirmDeleteId(null);
+
     // Scroll listener on feed container
     useEffect(() => {
         const container = feedContainerRef.current;
@@ -156,9 +161,29 @@ export default function Feed() {
                             <div className="flex items-center gap-1 ml-auto">
                                 {/* Cross button: Only show for current user's posts */}
                                 {post.user?.id === currentUserId && (
-                                    <Button size="icon" variant="ghost" className="rounded-full hover:bg-red-100 text-muted-foreground" aria-label="Remove post" onClick={() => handleDelete(post.id)} disabled={deleting && deleteId === post.id}>
-                                        <X className="h-5 w-5" />
-                                    </Button>
+                                    <>
+                                        <Dialog open={confirmDeleteId === post.id} onOpenChange={(open) => !open && closeDeleteDialog()}>
+                                            <DialogTrigger asChild>
+                                                <Button size="icon" variant="ghost" className="rounded-full hover:bg-red-100 text-muted-foreground" aria-label="Remove post" onClick={() => openDeleteDialog(post.id)} disabled={deleting && deleteId === post.id}>
+                                                    <X className="h-5 w-5" />
+                                                </Button>
+                                            </DialogTrigger>
+                                            <DialogContent>
+                                                <DialogHeader>
+                                                    <DialogTitle>Delete Post</DialogTitle>
+                                                </DialogHeader>
+                                                <div className="py-2">Are you sure you want to delete this post?</div>
+                                                <DialogFooter>
+                                                    <DialogClose asChild>
+                                                        <Button variant="secondary">Cancel</Button>
+                                                    </DialogClose>
+                                                    <Button variant="destructive" onClick={async () => { await handleDelete(post.id); closeDeleteDialog(); }} disabled={deleting && deleteId === post.id}>
+                                                        {deleting && deleteId === post.id ? 'Deleting...' : 'Confirm Delete'}
+                                                    </Button>
+                                                </DialogFooter>
+                                            </DialogContent>
+                                        </Dialog>
+                                    </>
                                 )}
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
