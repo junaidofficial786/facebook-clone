@@ -33,6 +33,42 @@ export function AppHeader() {
   // Determine if /feed is active
   const isFeedActive = typeof window !== 'undefined' && window.location.pathname.startsWith('/feed');
 
+  // Dummy data for messages and notifications
+  const dummyMessages = [
+    {
+      id: 1,
+      name: 'Alice Smith',
+      image: 'https://randomuser.me/api/portraits/women/44.jpg',
+      lastMessage: 'Hey, how are you?',
+    },
+    {
+      id: 2,
+      name: 'John Doe',
+      image: 'https://randomuser.me/api/portraits/men/32.jpg',
+      lastMessage: 'Let’s catch up soon!',
+    },
+    {
+      id: 3,
+      name: 'Sara Khan',
+      image: 'https://randomuser.me/api/portraits/women/22.jpg',
+      lastMessage: 'Sent you the files.',
+    },
+  ];
+  const dummyNotifications = [
+    {
+      id: 1,
+      text: 'Ali Raza liked your post.',
+    },
+    {
+      id: 2,
+      text: 'You have a new friend request from Sara Khan.',
+    },
+    {
+      id: 3,
+      text: 'Your group event is starting soon.',
+    },
+  ];
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white shadow-sm">
       <div className="mx-auto flex h-16 items-center gap-2 px-4 md:max-w-7xl">
@@ -79,12 +115,46 @@ export function AppHeader() {
 
         {/* Right: Messages, Notifications, Profile */}
         <div className="flex items-center gap-2 ml-auto">
-          <button className="relative rounded-full p-2 hover:bg-gray-100">
-            <MessageCircle className="h-6 w-6 text-gray-700 hover:text-gray-900" />
-          </button>
-          <button className="relative rounded-full p-2 hover:bg-gray-100">
-            <Bell className="h-6 w-6 text-gray-700 hover:text-gray-900" />
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="relative rounded-full p-2 hover:bg-gray-100">
+                <MessageCircle className="h-6 w-6 text-gray-700 hover:text-gray-900" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80 mt-2">
+              <div className="font-semibold px-3 py-2 text-gray-700 border-b">Messages</div>
+              {dummyMessages.map(msg => (
+                <DropdownMenuItem key={msg.id} className="flex items-center gap-3 py-2">
+                  <img src={msg.image} alt={msg.name} className="w-10 h-10 rounded-full object-cover" />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium truncate">{msg.name}</div>
+                    <div className="text-xs text-gray-500 truncate">{msg.lastMessage}</div>
+                  </div>
+                </DropdownMenuItem>
+              ))}
+              {dummyMessages.length === 0 && (
+                <div className="px-3 py-4 text-gray-500 text-sm">No messages</div>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="relative rounded-full p-2 hover:bg-gray-100">
+                <Bell className="h-6 w-6 text-gray-700 hover:text-gray-900" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80 mt-2">
+              <div className="font-semibold px-3 py-2 text-gray-700 border-b">Notifications</div>
+              {dummyNotifications.map(n => (
+                <DropdownMenuItem key={n.id} className="py-2">
+                  <div className="text-sm text-gray-700">{n.text}</div>
+                </DropdownMenuItem>
+              ))}
+              {dummyNotifications.length === 0 && (
+                <div className="px-3 py-4 text-gray-500 text-sm">No notifications</div>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
           {/* Profile Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
