@@ -32,7 +32,7 @@ class ProfileController extends Controller
         // Placeholder: Add friends, groups, posts, coverPhoto, profilePic, bio, etc.
         $userData = [
             'name' => $user->name,
-            'coverPhoto' => $user->cover_photo ? url($user->cover_photo) : self::coverImagePlaceholder(),
+            'coverPhoto' => $user->cover_pic ? url($user->cover_pic) : self::coverImagePlaceholder(),
             'profilePic' => $user->profile_pic ? url($user->profile_pic) : self::profileImagePlaceholder(),
             'bio' => $user->bio ?? '',
             'email' => $user->email,
@@ -66,6 +66,47 @@ class ProfileController extends Controller
         $request->user()->save();
 
         return to_route('profile.edit');
+    }
+
+    /**
+     * Update the user's profile or cover photo.
+     */
+    public function updatePhoto(Request $request)
+    {
+        $request->validate([
+            'type' => 'required|in:profile,cover',
+            'photo' => 'required|image|max:5120', // 5MB max
+        ]);
+
+        $user = $request->user();
+        $path = $request->file('photo')->store('profile-photos', 'public');
+
+        if ($request->type === 'profile') {
+            $user->profile_pic = '/storage/' . $path;
+        } else {
+            $user->cover_pic = '/storage/' . $path;
+        }
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'url' => url($user->profile_pic ?? $user->cover_pic),
+        ]);
+    }
+
+    /**
+     * Update the user's bio.
+     */
+    public function updateBio(Request $request)
+    {
+        $request->validate([
+            'bio' => 'nullable|string|max:500',
+        ]);
+        $user = $request->user();
+        $user->bio = $request->bio;
+        $user->save();
+
+        return response()->json(['success' => true, 'bio' => $user->bio]);
     }
 
     /**

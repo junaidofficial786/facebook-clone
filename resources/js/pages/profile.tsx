@@ -1,112 +1,270 @@
-import { useState } from 'react';
-import { Pencil, Camera, Users, Info, List, UserCircle2 } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Pencil, Camera, Users, Info, List, UserCircle2, Upload, X, Check } from 'lucide-react';
+import { useToast } from '@/components/ui/toast';
+import { Button } from '@/components/ui/button';
 
 interface ProfilePageProps {
-  user: {
-    name: string;
-    coverPhoto: string;
-    profilePic: string;
-    bio: string;
-    email: string;
-    gender: string;
-    birthday: string;
-    location: string;
-    friends: Array<{ id: number; name: string; profilePic: string }>;
-    groups: Array<{ id: number; name: string; cover: string }>;
-    posts: Array<{ id: number; content: string; created_at: string }>;
-  };
-  isOwnProfile: boolean;
+    user: {
+        name: string;
+        coverPhoto: string;
+        profilePic: string;
+        bio: string;
+        email: string;
+        gender: string;
+        birthday: string;
+        location: string;
+        friends: Array<{ id: number; name: string; profilePic: string }>;
+        groups: Array<{ id: number; name: string; cover: string }>;
+        posts: Array<{ id: number; content: string; created_at: string }>;
+    };
+    isOwnProfile: boolean;
 }
 
 export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
-  const [tab, setTab] = useState('posts');
+    const [tab, setTab] = useState('posts');
+    // Profile image upload state
+    const [profilePreview, setProfilePreview] = useState<string | null>(null);
+    const [profileFile, setProfileFile] = useState<File | null>(null);
+    const profileInputRef = useRef<HTMLInputElement>(null);
+    // Cover image upload state
+    const [coverPreview, setCoverPreview] = useState<string | null>(null);
+    const [coverFile, setCoverFile] = useState<File | null>(null);
+    const coverInputRef = useRef<HTMLInputElement>(null);
+    const [editingBio, setEditingBio] = useState(false);
+    const [bioInput, setBioInput] = useState(user.bio);
 
-  return (
-    <div className="max-w-4xl mx-auto mt-6 bg-white rounded-xl shadow-lg overflow-hidden">
-      {/* Cover Photo */}
-      <div className="relative h-60 bg-gray-200">
-        <img src={user.coverPhoto} alt="Cover" className="w-full h-full object-cover" />
-        {isOwnProfile && (
-          <button className="absolute top-4 right-4 bg-black/60 hover:bg-black/80 text-white rounded-full p-2" title="Edit cover photo">
-            <Camera className="w-5 h-5" />
-          </button>
-        )}
-        {/* Profile Pic */}
-        <div className="absolute left-8 -bottom-16 flex items-end">
-          <div className="relative">
-            <img src={user.profilePic} alt="Profile" className="w-36 h-36 rounded-full border-4 border-white shadow-lg object-cover bg-white" />
-            {isOwnProfile && (
-              <button className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-full p-1.5" title="Edit profile picture">
-                <Pencil className="w-4 h-4" />
-              </button>
-            )}
-          </div>
+    const { show: showToast } = useToast();
+
+    // Handlers for profile image
+    const handleProfileEdit = () => profileInputRef.current?.click();
+    const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setProfileFile(file);
+            setProfilePreview(URL.createObjectURL(file));
+        }
+    };
+    const handleProfileCancel = () => {
+        setProfileFile(null);
+        setProfilePreview(null);
+        if (profileInputRef.current) profileInputRef.current.value = '';
+    };
+
+    const csrfToken = (typeof document !== 'undefined' && document.querySelector('meta[name="csrf-token"]'))
+    ? (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement).content
+    : '';
+
+    const handleProfileSave = async () => {
+        if (!profileFile) return;
+        const formData = new FormData();
+        formData.append('type', 'profile');
+        formData.append('photo', profileFile);
+        const res = await fetch('/settings/profile/photo', {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-CSRF-TOKEN': csrfToken },
+        });
+        const data = await res.json();
+        if (data.success) {
+            setProfilePreview(null);
+            setProfileFile(null);
+            showToast('Profile photo updated successfully!');
+            // Optionally: reload or update image in state
+            window.location.reload();
+        }
+    };
+
+    // Handlers for cover image
+    const handleCoverEdit = () => coverInputRef.current?.click();
+    const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setCoverFile(file);
+            setCoverPreview(URL.createObjectURL(file));
+        }
+    };
+    const handleCoverCancel = () => {
+        setCoverFile(null);
+        setCoverPreview(null);
+        if (coverInputRef.current) coverInputRef.current.value = '';
+    };
+
+    const handleCoverSave = async () => {
+        if (!coverFile) return;
+        const formData = new FormData();
+        formData.append('type', 'cover');
+        formData.append('photo', coverFile);
+        const res = await fetch('/settings/profile/photo', {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-CSRF-TOKEN': csrfToken },
+        });
+        const data = await res.json();
+        if (data.success) {
+            setCoverPreview(null);
+            setCoverFile(null);
+            showToast('Cover photo updated successfully!');
+            window.location.reload();
+        }
+    };
+
+    const handleBioEdit = () => {
+        setEditingBio(true);
+        setBioInput(user.bio);
+    };
+    const handleBioCancel = () => {
+        setEditingBio(false);
+        setBioInput(user.bio);
+    };
+    const handleBioSave = async () => {
+        const res = await fetch('/settings/profile/bio', {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+            },
+            body: JSON.stringify({ bio: bioInput }),
+        });
+        const data = await res.json();
+        if (data.success) {
+            setEditingBio(false);
+            showToast('Bio updated successfully!');
+            window.location.reload();
+        }
+    };
+
+    return (
+        <div className="max-w-4xl mx-auto mt-6 bg-white rounded-xl shadow-lg overflow-hidden">
+            {/* Cover Photo */}
+            <div className="relative h-60 bg-gray-200">
+                <img src={coverPreview || user.coverPhoto} alt="Cover" className="w-full h-full object-cover" />
+                {isOwnProfile && (
+                    <>
+                        <button className="absolute top-4 right-4 bg-black/60 hover:bg-black/80 text-white rounded-full p-2" title="Edit cover photo" onClick={handleCoverEdit}>
+                            <Camera className="w-5 h-5" />
+                        </button>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            ref={coverInputRef}
+                            onChange={handleCoverChange}
+                        />
+                        {coverPreview && (
+                            <div className="absolute top-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                                <button className="bg-green-600 hover:bg-green-700 text-white rounded-full p-2 shadow" onClick={handleCoverSave} title="Save cover photo"><Check className="w-5 h-5" /></button>
+                                <button className="bg-red-600 hover:bg-red-700 text-white rounded-full p-2 shadow" onClick={handleCoverCancel} title="Cancel"><X className="w-5 h-5" /></button>
+                            </div>
+                        )}
+                    </>
+                )}
+                {/* Profile Pic */}
+                <div className="absolute left-8 -bottom-16 flex items-end">
+                    <div className="relative">
+                        <img src={profilePreview || user.profilePic} alt="Profile" className="w-36 h-36 rounded-full border-4 border-white shadow-lg object-cover bg-white" />
+                        {isOwnProfile && (
+                            <>
+                                <button className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-full p-1.5" title="Edit profile picture" onClick={handleProfileEdit}>
+                                    <Pencil className="w-4 h-4" />
+                                </button>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    ref={profileInputRef}
+                                    onChange={handleProfileChange}
+                                />
+                                {profilePreview && (
+                                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                                        <button className="bg-green-600 hover:bg-green-700 text-white rounded-full p-2 shadow" onClick={handleProfileSave} title="Save profile photo"><Check className="w-5 h-5" /></button>
+                                        <button className="bg-red-600 hover:bg-red-700 text-white rounded-full p-2 shadow" onClick={handleProfileCancel} title="Cancel"><X className="w-5 h-5" /></button>
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
+                </div>
+            </div>
+            {/* Name, Bio, Edit Bio */}
+            <div className="pt-20 pb-4 px-8 flex flex-col md:flex-row md:items-center md:justify-between border-b">
+                <div>
+                    <div className="text-2xl font-bold text-gray-900">{user.name}</div>
+                    <div className="flex items-center gap-2 mt-2 text-gray-700">
+                        {editingBio ? (
+                            <>
+                                <textarea
+                                    className="border rounded px-2 py-1 text-sm min-w-[200px] max-w-[400px]"
+                                    value={bioInput}
+                                    onChange={e => setBioInput(e.target.value)}
+                                    maxLength={500}
+                                    rows={2}
+                                />
+                                <Button variant="default" size="sm" className="ml-2" onClick={handleBioSave}>Save</Button>
+                                <Button variant="secondary" size="sm" className="ml-2" onClick={handleBioCancel}>Cancel</Button>
+                            </>
+                        ) : (
+                            <>
+                                <span>{user.bio}</span>
+                                {isOwnProfile && (
+                                    <button className="ml-2 text-blue-600 hover:text-blue-800" title="Edit bio" onClick={handleBioEdit}>
+                                        <Pencil className="w-4 h-4" />
+                                    </button>
+                                )}
+                            </>
+                        )}
+                    </div>
+                </div>
+            </div>
+            {/* Tabs */}
+            <div className="px-8 pt-2 bg-white sticky top-0 z-10 border-b">
+                <div className="flex gap-6 text-gray-600 font-semibold text-base">
+                    <button className={`py-3 border-b-2 transition-all ${tab === 'posts' ? 'border-blue-600 text-blue-600' : 'border-transparent'}`} onClick={() => setTab('posts')}><List className="inline w-5 h-5 mr-1" />Posts</button>
+                    <button className={`py-3 border-b-2 transition-all ${tab === 'friends' ? 'border-blue-600 text-blue-600' : 'border-transparent'}`} onClick={() => setTab('friends')}><Users className="inline w-5 h-5 mr-1" />Friends</button>
+                    <button className={`py-3 border-b-2 transition-all ${tab === 'info' ? 'border-blue-600 text-blue-600' : 'border-transparent'}`} onClick={() => setTab('info')}><Info className="inline w-5 h-5 mr-1" />Information</button>
+                    <button className={`py-3 border-b-2 transition-all ${tab === 'groups' ? 'border-blue-600 text-blue-600' : 'border-transparent'}`} onClick={() => setTab('groups')}><UserCircle2 className="inline w-5 h-5 mr-1" />Groups Joined</button>
+                </div>
+            </div>
+            {/* Tab Content */}
+            <div className="px-8 py-6 min-h-[300px] bg-gray-50">
+                {tab === 'posts' && (
+                    <div className="space-y-4">
+                        {user.posts.map(post => (
+                            <div key={post.id} className="bg-white rounded-lg shadow p-4 border">
+                                <div className="text-gray-800">{post.content}</div>
+                                <div className="text-xs text-gray-500 mt-2">{post.created_at}</div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+                {tab === 'friends' && (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {user.friends.map(friend => (
+                            <div key={friend.id} className="flex flex-col items-center bg-white rounded-lg shadow p-4 border">
+                                <img src={friend.profilePic} alt={friend.name} className="w-16 h-16 rounded-full object-cover mb-2" />
+                                <div className="font-medium text-gray-800">{friend.name}</div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+                {tab === 'info' && (
+                    <div className="space-y-2 text-gray-700">
+                        <div><span className="font-semibold">Email:</span> {user.email}</div>
+                        <div><span className="font-semibold">Gender:</span> {user.gender}</div>
+                        <div><span className="font-semibold">Birthday:</span> {user.birthday}</div>
+                        <div><span className="font-semibold">Location:</span> {user.location}</div>
+                    </div>
+                )}
+                {tab === 'groups' && (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {user.groups.map(group => (
+                            <div key={group.id} className="flex flex-col items-center bg-white rounded-lg shadow p-4 border">
+                                <img src={group.cover} alt={group.name} className="w-full h-20 object-cover rounded mb-2" />
+                                <div className="font-medium text-gray-800">{group.name}</div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
-      </div>
-      {/* Name, Bio, Edit Bio */}
-      <div className="pt-20 pb-4 px-8 flex flex-col md:flex-row md:items-center md:justify-between border-b">
-        <div>
-          <div className="text-2xl font-bold text-gray-900">{user.name}</div>
-          <div className="flex items-center gap-2 mt-2 text-gray-700">
-            <span>{user.bio}</span>
-            {isOwnProfile && (
-              <button className="ml-2 text-blue-600 hover:text-blue-800" title="Edit bio">
-                <Pencil className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-      {/* Tabs */}
-      <div className="px-8 pt-2 bg-white sticky top-0 z-10 border-b">
-        <div className="flex gap-6 text-gray-600 font-semibold text-base">
-          <button className={`py-3 border-b-2 transition-all ${tab === 'posts' ? 'border-blue-600 text-blue-600' : 'border-transparent'}`} onClick={() => setTab('posts')}><List className="inline w-5 h-5 mr-1" />Posts</button>
-          <button className={`py-3 border-b-2 transition-all ${tab === 'friends' ? 'border-blue-600 text-blue-600' : 'border-transparent'}`} onClick={() => setTab('friends')}><Users className="inline w-5 h-5 mr-1" />Friends</button>
-          <button className={`py-3 border-b-2 transition-all ${tab === 'info' ? 'border-blue-600 text-blue-600' : 'border-transparent'}`} onClick={() => setTab('info')}><Info className="inline w-5 h-5 mr-1" />Information</button>
-          <button className={`py-3 border-b-2 transition-all ${tab === 'groups' ? 'border-blue-600 text-blue-600' : 'border-transparent'}`} onClick={() => setTab('groups')}><UserCircle2 className="inline w-5 h-5 mr-1" />Groups Joined</button>
-        </div>
-      </div>
-      {/* Tab Content */}
-      <div className="px-8 py-6 min-h-[300px] bg-gray-50">
-        {tab === 'posts' && (
-          <div className="space-y-4">
-            {user.posts.map(post => (
-              <div key={post.id} className="bg-white rounded-lg shadow p-4 border">
-                <div className="text-gray-800">{post.content}</div>
-                <div className="text-xs text-gray-500 mt-2">{post.created_at}</div>
-              </div>
-            ))}
-          </div>
-        )}
-        {tab === 'friends' && (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {user.friends.map(friend => (
-              <div key={friend.id} className="flex flex-col items-center bg-white rounded-lg shadow p-4 border">
-                <img src={friend.profilePic} alt={friend.name} className="w-16 h-16 rounded-full object-cover mb-2" />
-                <div className="font-medium text-gray-800">{friend.name}</div>
-              </div>
-            ))}
-          </div>
-        )}
-        {tab === 'info' && (
-          <div className="space-y-2 text-gray-700">
-            <div><span className="font-semibold">Email:</span> {user.email}</div>
-            <div><span className="font-semibold">Gender:</span> {user.gender}</div>
-            <div><span className="font-semibold">Birthday:</span> {user.birthday}</div>
-            <div><span className="font-semibold">Location:</span> {user.location}</div>
-          </div>
-        )}
-        {tab === 'groups' && (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {user.groups.map(group => (
-              <div key={group.id} className="flex flex-col items-center bg-white rounded-lg shadow p-4 border">
-                <img src={group.cover} alt={group.name} className="w-full h-20 object-cover rounded mb-2" />
-                <div className="font-medium text-gray-800">{group.name}</div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
+    );
 }
