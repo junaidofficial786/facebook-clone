@@ -27,7 +27,7 @@ export default function Feed() {
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [confirmDeleteId, setConfirmDeleteId] = useState<number|null>(null);
-    const [openReactionDialog, setOpenReactionDialog] = useState<{ postId: number, reactionId: number } | null>(null);
+    const [openReactionDialog, setOpenReactionDialog] = useState<{ postId?: number, commentId?: number, reactionId: number } | null>(null);
     const [reactionUsers, setReactionUsers] = useState<any[]>([]);
     const [loadingReactionUsers, setLoadingReactionUsers] = useState(false);
 
@@ -107,11 +107,16 @@ export default function Feed() {
     const openDeleteDialog = (postId: number) => setConfirmDeleteId(postId);
     const closeDeleteDialog = () => setConfirmDeleteId(null);
 
-    const handleEmojiClick = async (postId: number, reactionId: number) => {
-        setOpenReactionDialog({ postId, reactionId });
+    const handleEmojiClick = async (postId: number | undefined, reactionId: number, commentId?: number) => {
+        setOpenReactionDialog(commentId ? { commentId, reactionId } : { postId, reactionId });
         setLoadingReactionUsers(true);
         try {
-            const res = await axios.get(`/posts/${postId}/reactions/${reactionId}`);
+            let res;
+            if (commentId) {
+                res = await axios.get(`/comments/${commentId}/reactions/${reactionId}`);
+            } else {
+                res = await axios.get(`/posts/${postId}/reactions/${reactionId}`);
+            }
             setReactionUsers(res.data.users || []);
         } catch (e) {
             setReactionUsers([]);
@@ -309,11 +314,44 @@ export default function Feed() {
                                                         <ThumbsUp className={`h-3.5 w-3.5 mr-1 ${comment.liked_by_me ? 'text-blue-600' : 'text-gray-700'}`} />
                                                         Like
                                                     </Button>
-                                                    {comment.likes_count > 0 && (
-                                                        <span className="flex items-center gap-1 bg-blue-50 text-blue-600 rounded-full px-2 py-0.5 text-xs font-medium ml-1">
-                                                            <ThumbsUp className="h-3.5 w-3.5" />
-                                                            {comment.likes_count}
+                                                    {/* Comment reactions summary */}
+                                                    {comment.reactions_summary && comment.reactions_summary.length > 0 && (
+                                                        <span className="flex items-center gap-0.5 ml-2">
+                                                            {comment.reactions_summary.map((r: any) => (
+                                                                <span
+                                                                    key={r.reaction_id}
+                                                                    title={r.name}
+                                                                    className="text-lg cursor-pointer px-1 rounded hover:bg-gray-200"
+                                                                    onClick={e => { e.stopPropagation(); handleEmojiClick(undefined, r.reaction_id, comment.id); }}
+                                                                >
+                                                                    {r.icon} <span className="text-xs align-middle">{r.count}</span>
+                                                                </span>
+                                                            ))}
                                                         </span>
+                                                    )}
+                                                    {/* Comment Reaction Users Dialog */}
+                                                    {openReactionDialog && openReactionDialog.commentId === comment.id && (
+                                                        <Dialog open={true} onOpenChange={closeReactionDialog}>
+                                                            <DialogContent>
+                                                                <DialogHeader>
+                                                                    <DialogTitle>Users who reacted</DialogTitle>
+                                                                </DialogHeader>
+                                                                {loadingReactionUsers ? (
+                                                                    <div className="py-4 text-center">Loading...</div>
+                                                                ) : reactionUsers.length > 0 ? (
+                                                                    <ul className="py-2">
+                                                                        {reactionUsers.map((user: any) => (
+                                                                            <li key={user.id} className="py-1 flex items-center gap-2">
+                                                                                <Avatar className="h-6 w-6"><AvatarImage src={user.profile_pic} alt={user.name} /><AvatarFallback>{user.name?.[0]}</AvatarFallback></Avatar>
+                                                                                <span>{user.name}</span>
+                                                                            </li>
+                                                                        ))}
+                                                                    </ul>
+                                                                ) : (
+                                                                    <div className="py-4 text-center text-muted-foreground">No users found.</div>
+                                                                )}
+                                                            </DialogContent>
+                                                        </Dialog>
                                                     )}
                                                     <Button
                                                         variant="ghost"

@@ -32,6 +32,24 @@ class PostService
                 $comment->likes_count = $comment->commentReactions->count();
                 $comment->created_at_human = $comment->created_at->diffForHumans();
                 $comment->liked_by_me = $comment->myCommentReaction !== null;
+                // Comment reaction summary
+                $reactionSummary = $comment->commentReactions()
+                    ->selectRaw('reaction_id, COUNT(*) as count')
+                    ->groupBy('reaction_id')
+                    ->with('reaction:id,name,icon')
+                    ->get()
+                    ->map(function ($r) {
+                        return [
+                            'reaction_id' => $r->reaction_id,
+                            'count' => $r->count,
+                            'name' => $r->reaction->name ?? '',
+                            'icon' => $r->reaction->icon ?? '',
+                        ];
+                    })
+                    ->sortByDesc('count')
+                    ->values()
+                    ->toArray();
+                $comment->reactions_summary = $reactionSummary;
                 return $comment;
             });
             // Reaction summary logic

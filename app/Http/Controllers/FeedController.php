@@ -7,6 +7,7 @@ use Inertia\Inertia;
 use App\Services\PostService;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Post;
+use App\Models\Comment;
 
 class FeedController extends Controller
 {
@@ -40,6 +41,18 @@ class FeedController extends Controller
     public function reactionUsers(Post $post, $reactionId)
     {
         $users = $post->postReactions()
+            ->where('reaction_id', $reactionId)
+            ->with('user:id,name,profile_pic')
+            ->get()
+            ->pluck('user')
+            ->filter()
+            ->values();
+        return response()->json(['users' => $users]);
+    }
+
+    public function commentReactionUsers(Comment $comment, $reactionId)
+    {
+        $users = $comment->commentReactions()
             ->where('reaction_id', $reactionId)
             ->with('user:id,name,profile_pic')
             ->get()
