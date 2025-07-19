@@ -75,7 +75,11 @@ class ProfileController extends Controller
     {
         $request->validate([
             'type' => 'required|in:profile,cover',
-            'photo' => 'required|image|max:5120', // 5MB max
+            'photo' => [
+                'required',
+                'image',
+                $request->type === 'cover' ? 'max:5120' : 'max:2048', // 5MB for cover, 2MB for profile
+            ],
         ]);
         $user = $request->user();
         // Extra safety: Only allow updating own profile photo
@@ -114,6 +118,30 @@ class ProfileController extends Controller
         $user->save();
 
         return response()->json(['success' => true, 'bio' => $user->bio]);
+    }
+
+    /**
+     * Update the user's information (email, gender, birthday, location).
+     */
+    public function updateInfo(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email|max:255',
+            'gender' => 'nullable|string|max:20',
+            'birthday' => 'nullable|date_format:Y-m-d',
+            'location' => 'nullable|string|max:255',
+        ]);
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+        $user->email = $request->email;
+        $user->gender = $request->gender;
+        $user->birthday = $request->birthday;
+        $user->location = $request->location;
+        $user->save();
+
+        return response()->json(['success' => true]);
     }
 
     /**

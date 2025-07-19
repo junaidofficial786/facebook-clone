@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { Pencil, Camera, Users, Info, List, UserCircle2, Upload, X, Check } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
+import LoaderOverlay from '@/components/ui/loader';
 
 interface ProfilePageProps {
     user: {
@@ -32,6 +33,17 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
     const coverInputRef = useRef<HTMLInputElement>(null);
     const [editingBio, setEditingBio] = useState(false);
     const [bioInput, setBioInput] = useState(user.bio);
+    const [editingInfo, setEditingInfo] = useState(false);
+    const [infoInput, setInfoInput] = useState({
+        email: user.email,
+        gender: user.gender,
+        birthday: user.birthday,
+        location: user.location,
+    });
+    const [loadingProfile, setLoadingProfile] = useState(false);
+    const [loadingCover, setLoadingCover] = useState(false);
+    const [loadingBio, setLoadingBio] = useState(false);
+    const [loadingInfo, setLoadingInfo] = useState(false);
 
     const { show: showToast } = useToast();
 
@@ -40,6 +52,11 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
     const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            if (file.size > 2 * 1024 * 1024) { // 2MB
+                showToast('Profile photo must be 2MB or less.');
+                if (profileInputRef.current) profileInputRef.current.value = '';
+                return;
+            }
             setProfileFile(file);
             setProfilePreview(URL.createObjectURL(file));
         }
@@ -56,6 +73,7 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
 
     const handleProfileSave = async () => {
         if (!profileFile) return;
+        setLoadingProfile(true);
         const formData = new FormData();
         formData.append('type', 'profile');
         formData.append('photo', profileFile);
@@ -65,6 +83,7 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
             headers: { 'X-CSRF-TOKEN': csrfToken },
         });
         const data = await res.json();
+        setLoadingProfile(false);
         if (data.success) {
             setProfilePreview(null);
             setProfileFile(null);
@@ -79,6 +98,11 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
     const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            if (file.size > 5 * 1024 * 1024) { // 5MB
+                showToast('Cover photo must be 5MB or less.');
+                if (coverInputRef.current) coverInputRef.current.value = '';
+                return;
+            }
             setCoverFile(file);
             setCoverPreview(URL.createObjectURL(file));
         }
@@ -91,6 +115,7 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
 
     const handleCoverSave = async () => {
         if (!coverFile) return;
+        setLoadingCover(true);
         const formData = new FormData();
         formData.append('type', 'cover');
         formData.append('photo', coverFile);
@@ -100,6 +125,7 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
             headers: { 'X-CSRF-TOKEN': csrfToken },
         });
         const data = await res.json();
+        setLoadingCover(false);
         if (data.success) {
             setCoverPreview(null);
             setCoverFile(null);
@@ -117,6 +143,7 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
         setBioInput(user.bio);
     };
     const handleBioSave = async () => {
+        setLoadingBio(true);
         const res = await fetch('/settings/profile/bio', {
             method: 'PATCH',
             headers: {
@@ -126,6 +153,7 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
             body: JSON.stringify({ bio: bioInput }),
         });
         const data = await res.json();
+        setLoadingBio(false);
         if (data.success) {
             setEditingBio(false);
             showToast('Bio updated successfully!');
@@ -133,8 +161,50 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
         }
     };
 
+    const handleInfoEdit = () => {
+        setEditingInfo(true);
+        setInfoInput({
+            email: user.email,
+            gender: user.gender,
+            birthday: user.birthday,
+            location: user.location,
+        });
+    };
+    const handleInfoCancel = () => {
+        setEditingInfo(false);
+        setInfoInput({
+            email: user.email,
+            gender: user.gender,
+            birthday: user.birthday,
+            location: user.location,
+        });
+    };
+    const handleInfoSave = async () => {
+        setLoadingInfo(true);
+        const payload = {
+            ...infoInput,
+            birthday: infoInput.birthday ? infoInput.birthday.slice(0, 10) : '', // Ensures YYYY-MM-DD
+        };
+        const res = await fetch('/settings/profile/info', {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+            },
+            body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        setLoadingInfo(false);
+        if (data.success) {
+            setEditingInfo(false);
+            showToast('Information updated successfully!');
+            window.location.reload();
+        }
+    };
+
     return (
         <div className="max-w-5xl w-full mx-auto mt-6 bg-white rounded-xl shadow-lg overflow-hidden">
+            {(loadingProfile || loadingCover || loadingBio || loadingInfo) && <LoaderOverlay />}
             {/* Cover Photo */}
             <div className="relative h-60 bg-gray-200">
                 <img src={coverPreview || user.coverPhoto} alt="Cover" className="w-full h-full object-cover" />
@@ -248,10 +318,60 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
                 )}
                 {tab === 'info' && (
                     <div className="space-y-2 text-gray-700">
-                        <div><span className="font-semibold">Email:</span> {user.email}</div>
-                        <div><span className="font-semibold">Gender:</span> {user.gender}</div>
-                        <div><span className="font-semibold">Birthday:</span> {user.birthday}</div>
-                        <div><span className="font-semibold">Location:</span> {user.location}</div>
+                        {editingInfo ? (
+                            <>
+                                <div>
+                                    <span className="font-semibold">Email:</span>
+                                    <input
+                                        type="email"
+                                        className="border rounded px-2 py-1 ml-2 text-sm"
+                                        value={infoInput.email}
+                                        onChange={e => setInfoInput({ ...infoInput, email: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <span className="font-semibold">Gender:</span>
+                                    <input
+                                        type="text"
+                                        className="border rounded px-2 py-1 ml-2 text-sm"
+                                        value={infoInput.gender}
+                                        onChange={e => setInfoInput({ ...infoInput, gender: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <span className="font-semibold">Birthday:</span>
+                                    <input
+                                        type="date"
+                                        className="border rounded px-2 py-1 ml-2 text-sm"
+                                        value={infoInput.birthday}
+                                        onChange={e => setInfoInput({ ...infoInput, birthday: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <span className="font-semibold">Location:</span>
+                                    <input
+                                        type="text"
+                                        className="border rounded px-2 py-1 ml-2 text-sm"
+                                        value={infoInput.location}
+                                        onChange={e => setInfoInput({ ...infoInput, location: e.target.value })}
+                                    />
+                                </div>
+                                <div className="mt-2 flex gap-2">
+                                    <Button variant="default" size="sm" onClick={handleInfoSave}>Save</Button>
+                                    <Button variant="secondary" size="sm" onClick={handleInfoCancel}>Cancel</Button>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div><span className="font-semibold">Email:</span> {user.email}</div>
+                                <div><span className="font-semibold">Gender:</span> {user.gender}</div>
+                                <div><span className="font-semibold">Birthday:</span> {user.birthday}</div>
+                                <div><span className="font-semibold">Location:</span> {user.location}</div>
+                                {isOwnProfile && (
+                                    <Button variant="secondary" size="sm" className="mt-2" onClick={handleInfoEdit}>Edit</Button>
+                                )}
+                            </>
+                        )}
                     </div>
                 )}
                 {tab === 'groups' && (
