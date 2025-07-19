@@ -250,7 +250,8 @@ export default function Feed() {
                                                     {media.media_type === 'video' ? (
                                                         <video
                                                             src={media.media_url?.startsWith('http') ? media.media_url : `/storage/${media.media_url}`}
-                                                            className="rounded-lg w-full max-h-[500px] object-cover"
+                                                            className="rounded-lg w-full max-h-[500px] mx-auto object-contain bg-black"
+                                                            style={{ aspectRatio: 'auto' }}
                                                             controls
                                                             preload="none"
                                                         />
@@ -621,7 +622,7 @@ export default function Feed() {
                         {viewMedia.type === 'image' ? (
                             <img src={viewMedia.url} alt="View Media" className="max-h-[80vh] max-w-full rounded-lg" loading="lazy" />
                         ) : (
-                            <video src={viewMedia.url} controls autoPlay className="max-h-[80vh] max-w-full rounded-lg" preload="none" />
+                            <video src={viewMedia.url} controls autoPlay className="max-h-[80vh] max-w-full rounded-lg bg-black object-contain" preload="none" style={{ aspectRatio: 'auto' }} />
                         )}
                     </DialogContent>
                 </Dialog>
