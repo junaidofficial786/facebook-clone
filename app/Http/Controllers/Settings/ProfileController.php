@@ -10,15 +10,43 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Traits\HasProfileImages;
 
 class ProfileController extends Controller
 {
+    use HasProfileImages;
+
     /**
      * Show the user's profile settings page.
      */
-    public function edit(Request $request): Response
+    public function edit(Request $request, $id = null): Response
     {
+        if ($id) {
+            $user = \App\Models\User::findOrFail($id);
+            $isOwnProfile = $request->user() && $request->user()->id == $user->id;
+        } else {
+            $user = $request->user();
+            $isOwnProfile = true;
+        }
+
+        // Placeholder: Add friends, groups, posts, coverPhoto, profilePic, bio, etc.
+        $userData = [
+            'name' => $user->name,
+            'coverPhoto' => $user->cover_photo ? url($user->cover_photo) : self::coverImagePlaceholder(),
+            'profilePic' => $user->profile_pic ? url($user->profile_pic) : self::profileImagePlaceholder(),
+            'bio' => $user->bio ?? '',
+            'email' => $user->email,
+            'gender' => $user->gender ?? '',
+            'birthday' => $user->birthday ?? '',
+            'location' => $user->location ?? '',
+            'friends' => [], // TODO: Load real friends
+            'groups' => [], // TODO: Load real groups
+            'posts' => [], // TODO: Load real posts
+        ];
+
         return Inertia::render('settings/profile', [
+            'user' => $userData,
+            'isOwnProfile' => $isOwnProfile,
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
         ]);

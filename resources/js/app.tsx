@@ -7,6 +7,7 @@ import { createRoot } from 'react-dom/client';
 import { initializeTheme } from './hooks/use-appearance';
 import { configureEcho } from '@laravel/echo-react';
 import { ToastProvider } from '@/components/ui/toast';
+import NotFound from './pages/404';
 
 
 configureEcho({
@@ -23,7 +24,15 @@ createInertiaApp({
 
         root.render(
             <ToastProvider>
-                <App {...props} />
+                <App
+                    {...props}
+                    errorBoundary={({ error }) => {
+                        if (error.status === 404) {
+                            return <NotFound />;
+                        }
+                        return <div className="min-h-screen flex items-center justify-center text-red-600 text-xl font-bold">An unexpected error occurred.</div>;
+                    }}
+                />
             </ToastProvider>
         );
     },

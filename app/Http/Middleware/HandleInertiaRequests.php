@@ -6,6 +6,8 @@ use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Tighten\Ziggy\Ziggy;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Inertia\Inertia;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -52,5 +54,17 @@ class HandleInertiaRequests extends Middleware
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
+    }
+
+    public function handle($request, \Closure $next)
+    {
+        try {
+            return parent::handle($request, $next);
+        } catch (NotFoundHttpException $e) {
+            if ($request->header('X-Inertia')) {
+                return Inertia::render('404')->toResponse($request)->setStatusCode(404);
+            }
+            throw $e;
+        }
     }
 }

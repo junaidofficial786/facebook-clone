@@ -1,34 +1,25 @@
 import { useState } from 'react';
-import { Tabs, Tab } from '@/components/ui/tabs'; // Assume you have a Tabs component, or use headlessui/react
 import { Pencil, Camera, Users, Info, List, UserCircle2 } from 'lucide-react';
 
-const user = {
-  name: 'John Doe',
-  coverPhoto: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=cover&w=1200&q=80',
-  profilePic: 'https://randomuser.me/api/portraits/men/32.jpg',
-  bio: 'Web developer. Dreamer. Coffee enthusiast. Living life one line of code at a time.',
-  email: 'john.doe@example.com',
-  gender: 'Male',
-  birthday: '1990-01-01',
-  location: 'San Francisco, CA',
-  friends: [
-    { id: 1, name: 'Jane Smith', profilePic: 'https://randomuser.me/api/portraits/women/44.jpg' },
-    { id: 2, name: 'Mike Brown', profilePic: 'https://randomuser.me/api/portraits/men/45.jpg' },
-    { id: 3, name: 'Alice Green', profilePic: 'https://randomuser.me/api/portraits/women/46.jpg' },
-  ],
-  groups: [
-    { id: 1, name: 'React Developers', cover: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=cover&w=400&q=80' },
-    { id: 2, name: 'Laravel Pakistan', cover: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=cover&w=400&q=80' },
-  ],
-  posts: [
-    { id: 1, content: 'Just finished a new project!', created_at: '2 hours ago' },
-    { id: 2, content: 'Loving the new React features.', created_at: '1 day ago' },
-  ],
-};
+interface ProfilePageProps {
+  user: {
+    name: string;
+    coverPhoto: string;
+    profilePic: string;
+    bio: string;
+    email: string;
+    gender: string;
+    birthday: string;
+    location: string;
+    friends: Array<{ id: number; name: string; profilePic: string }>;
+    groups: Array<{ id: number; name: string; cover: string }>;
+    posts: Array<{ id: number; content: string; created_at: string }>;
+  };
+  isOwnProfile: boolean;
+}
 
-export default function PublicProfile() {
+export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
   const [tab, setTab] = useState('posts');
-  const isOwnProfile = true; // TODO: Replace with auth check
 
   return (
     <div className="max-w-4xl mx-auto mt-6 bg-white rounded-xl shadow-lg overflow-hidden">
