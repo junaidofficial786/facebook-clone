@@ -77,8 +77,11 @@ class ProfileController extends Controller
             'type' => 'required|in:profile,cover',
             'photo' => 'required|image|max:5120', // 5MB max
         ]);
-
         $user = $request->user();
+        // Extra safety: Only allow updating own profile photo
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
         $path = $request->file('photo')->store('profile-photos', 'public');
 
         if ($request->type === 'profile') {
@@ -103,6 +106,10 @@ class ProfileController extends Controller
             'bio' => 'nullable|string|max:500',
         ]);
         $user = $request->user();
+        // Extra safety: Only allow updating own profile
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
         $user->bio = $request->bio;
         $user->save();
 

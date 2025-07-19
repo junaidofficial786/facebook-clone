@@ -134,7 +134,7 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
     };
 
     return (
-        <div className="max-w-4xl mx-auto mt-6 bg-white rounded-xl shadow-lg overflow-hidden">
+        <div className="max-w-5xl w-full mx-auto mt-6 bg-white rounded-xl shadow-lg overflow-hidden">
             {/* Cover Photo */}
             <div className="relative h-60 bg-gray-200">
                 <img src={coverPreview || user.coverPhoto} alt="Cover" className="w-full h-full object-cover" />
