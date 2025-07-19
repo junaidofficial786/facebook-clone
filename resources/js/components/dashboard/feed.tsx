@@ -5,20 +5,26 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MessageCircle, ThumbsUp, X, MoreVertical, Bookmark, EyeOff, Flag, Link2, Loader } from 'lucide-react';
+import { MessageCircle, ThumbsUp, X, MoreVertical, Bookmark, EyeOff, Flag, Link2, Loader, Globe, Users, Lock } from 'lucide-react';
 import CreatePost from '@/components/dashboard/CreatePost';
 import axios from 'axios';
 import LoaderOverlay from '@/components/ui/loader';
+import Toast from '@/components/ui/toast';
 
 export default function Feed() {
     const [editorValue, setEditorValue] = useState('');
     const [media, setMedia] = useState<File | null>(null);
-    const { posts: initialPosts } = usePage().props as any;
+    const { posts: initialPosts, auth } = usePage().props as any;
+    const currentUserId = auth?.user?.id;
     const [posts, setPosts] = useState(initialPosts?.data || []);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [loading, setLoading] = useState(false);
     const [replyingTo, setReplyingTo] = useState<number | null>(null);
+    const [deleting, setDeleting] = useState(false);
+    const [deleteId, setDeleteId] = useState<number|null>(null);
+    const [showToast, setShowToast] = useState(false);
+    const [toastMessage, setToastMessage] = useState('');
 
     const loadingRef = useRef(loading);
     const hasMoreRef = useRef(hasMore);
@@ -77,6 +83,22 @@ export default function Feed() {
         inFlightPages.current.delete(nextPage);
     }, []);
 
+    const handleDelete = async (postId: number) => {
+        setDeleting(true);
+        setDeleteId(postId);
+        try {
+            await axios.delete(`/posts/${postId}`);
+            setPosts((prev: any[]) => prev.filter((p) => p.id !== postId));
+            setToastMessage('Post successfully deleted');
+            setShowToast(true);
+        } catch (e) {
+            setToastMessage('Unable to delete.');
+            setShowToast(true);
+        }
+        setDeleting(false);
+        setDeleteId(null);
+    };
+
     // Scroll listener on feed container
     useEffect(() => {
         const container = feedContainerRef.current;
@@ -97,7 +119,8 @@ export default function Feed() {
 
     return (
         <>
-            {loading && <LoaderOverlay />}
+            {deleting && <LoaderOverlay />}
+            {showToast && <Toast message={toastMessage} onClose={() => setShowToast(false)} />}
             <div ref={feedContainerRef} className="flex flex-col gap-6 h-full min-h-0 overflow-y-auto scrollbar-hide">
                 <CreatePost />
 
@@ -111,13 +134,32 @@ export default function Feed() {
                                 </Avatar>
                                 <div>
                                     <div className="font-medium">{post.user?.name}</div>
-                                    <div className="text-xs text-muted-foreground">{post.created_at_human}</div>
+                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                        {post.created_at_human}
+                                        {/* Visibility Indicator: Only show for current user's posts */}
+                                        {post.user?.id === currentUserId && (
+                                            <>
+                                                {post.visibility === 'public' && (
+                                                    <span className="flex items-center gap-1 ml-2"><Globe className="h-3.5 w-3.5" /> Public</span>
+                                                )}
+                                                {post.visibility === 'friends' && (
+                                                    <span className="flex items-center gap-1 ml-2"><Users className="h-3.5 w-3.5" /> Friends</span>
+                                                )}
+                                                {post.visibility === 'private' && (
+                                                    <span className="flex items-center gap-1 ml-2"><Lock className="h-3.5 w-3.5" /> Private</span>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                             <div className="flex items-center gap-1 ml-auto">
-                                <Button size="icon" variant="ghost" className="rounded-full hover:bg-red-100 text-muted-foreground" aria-label="Remove post">
-                                    <X className="h-5 w-5" />
-                                </Button>
+                                {/* Cross button: Only show for current user's posts */}
+                                {post.user?.id === currentUserId && (
+                                    <Button size="icon" variant="ghost" className="rounded-full hover:bg-red-100 text-muted-foreground" aria-label="Remove post" onClick={() => handleDelete(post.id)} disabled={deleting && deleteId === post.id}>
+                                        <X className="h-5 w-5" />
+                                    </Button>
+                                )}
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button size="icon" variant="ghost" className="rounded-full" aria-label="Post options">

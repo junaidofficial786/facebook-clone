@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Services\PostService;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Post;
 
 class FeedController extends Controller
 {
@@ -25,5 +26,14 @@ class FeedController extends Controller
         $page = $request->input('page', null);
         $posts = PostService::getFeedPosts($perPage, $page);
         return response()->json($posts);
+    }
+
+    public function destroy(Request $request, Post $post)
+    {
+        if ($post->user_id !== Auth::id()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+        $post->delete();
+        return response()->json(['success' => true]);
     }
 }
