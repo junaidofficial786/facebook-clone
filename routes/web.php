@@ -17,8 +17,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('posts/{post}', [FeedController::class, 'destroy'])->name('posts.destroy');
     Route::get('posts/{post}/reactions/{reaction}', [FeedController::class, 'reactionUsers']);
     Route::get('comments/{comment}/reactions/{reaction}', [FeedController::class, 'commentReactionUsers']);
+    Route::post('posts', [FeedController::class, 'store'])->name('posts.store');
 });
 
+//an revern event that throws event for testing
 Route::get('/event', function () {
     event(new PostCreate());
     dd('ok');

@@ -29,13 +29,35 @@ class FeedController extends Controller
         return response()->json($posts);
     }
 
+    public function store(Request $request)
+    {
+        $request->validate([
+            'content' => 'required|string',
+            'privacy' => 'required|in:public,friends,private',
+            'media.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,mp4,mov,avi,webm|max:51200', // 50MB max per file
+        ]);
+
+        try {
+            $post = PostService::createPost(
+                $request->user(),
+                $request->content,
+                $request->privacy,
+                $request->hasFile('media') ? $request->file('media') : null
+            );
+            return response()->json(['success' => true, 'post_id' => $post->id]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 403);
+        }
+    }
+
     public function destroy(Request $request, Post $post)
     {
-        if ($post->user_id !== Auth::id()) {
-            return response()->json(['error' => 'Unauthorized'], 403);
+        try {
+            PostService::deletePost($request->user(), $post);
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 403);
         }
-        $post->delete();
-        return response()->json(['success' => true]);
     }
 
     public function reactionUsers(Post $post, $reactionId)
