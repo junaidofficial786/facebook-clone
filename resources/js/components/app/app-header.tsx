@@ -9,8 +9,9 @@ import {
 import {
   Home,
   PlaySquare,
-  Store,
   Users,
+  UsersRound,
+  Gamepad2,
   MessageCircle,
   Bell,
   Settings,
@@ -56,19 +57,23 @@ export function AppHeader() {
               'group flex flex-col items-center justify-center px-3 py-1.5 rounded-md hover:bg-gray-100 ' +
               (isFeedActive ? 'bg-gray-100 text-gray-900' : '')
             }
+            title="Home"
           >
             <Home className={
               'h-6 w-6 ' + (isFeedActive ? 'text-gray-900' : 'text-gray-700 group-hover:text-gray-900')
             } />
           </Link>
-          <button className="group flex flex-col items-center justify-center px-3 py-1.5 rounded-md hover:bg-gray-100">
+          <button className="group flex flex-col items-center justify-center px-3 py-1.5 rounded-md hover:bg-gray-100" title="People">
+            <Users className="h-6 w-6 text-gray-700 group-hover:text-gray-900" />
+          </button>
+          <button className="group flex flex-col items-center justify-center px-3 py-1.5 rounded-md hover:bg-gray-100" title="Videos">
             <PlaySquare className="h-6 w-6 text-gray-700 group-hover:text-gray-900" />
           </button>
-          <button className="group flex flex-col items-center justify-center px-3 py-1.5 rounded-md hover:bg-gray-100">
-            <Store className="h-6 w-6 text-gray-700 group-hover:text-gray-900" />
+          <button className="group flex flex-col items-center justify-center px-3 py-1.5 rounded-md hover:bg-gray-100" title="Groups">
+            <UsersRound className="h-6 w-6 text-gray-700 group-hover:text-gray-900" />
           </button>
-          <button className="group flex flex-col items-center justify-center px-3 py-1.5 rounded-md hover:bg-gray-100">
-            <Users className="h-6 w-6 text-gray-700 group-hover:text-gray-900" />
+          <button className="group flex flex-col items-center justify-center px-3 py-1.5 rounded-md hover:bg-gray-100" title="Games">
+            <Gamepad2 className="h-6 w-6 text-gray-700 group-hover:text-gray-900" />
           </button>
         </nav>
 

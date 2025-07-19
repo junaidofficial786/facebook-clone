@@ -12,6 +12,7 @@ import LoaderOverlay from '@/components/ui/loader';
 import Toast from '@/components/ui/toast';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import CustomDialog from '@/components/ui/CustomDialog';
+import { Link } from '@inertiajs/react';
 
 export default function Feed() {
     const [editorValue, setEditorValue] = useState('');
@@ -174,7 +175,9 @@ export default function Feed() {
                                     <AvatarFallback>{post.user?.name?.[0]}</AvatarFallback>
                                 </Avatar>
                                 <div>
-                                    <div className="font-medium">{post.user?.name}</div>
+                                    <div className="font-medium">
+                                        <Link href={`/settings/profile/${post.user?.id}`} className="text-black font-medium hover:underline">{post.user?.name}</Link>
+                                    </div>
                                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                         {post.created_at_human}
                                         {/* Visibility Indicator: Only show for current user's posts */}
@@ -536,7 +539,7 @@ export default function Feed() {
                                             </Avatar>
                                             <div className="bg-gray-100 rounded-lg px-3 py-2 flex-1">
                                                 <div className="font-medium text-sm flex items-center gap-2">
-                                                    {comment.user?.name}
+                                                    <Link href={`/settings/profile/${comment.user?.id}`} className="text-black font-medium hover:underline">{comment.user?.name}</Link>
                                                     <span className="text-xs text-muted-foreground font-normal">{comment.created_at_human}</span>
                                                 </div>
                                                 <div className="text-sm text-gray-700 whitespace-pre-line">{comment.content}</div>

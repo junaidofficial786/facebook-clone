@@ -203,7 +203,7 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
     };
 
     return (
-        <div className="max-w-5xl w-full mx-auto mt-6 bg-white rounded-xl shadow-lg overflow-hidden">
+        <div className="max-w-7xl w-full mx-auto mt-6 bg-white rounded-xl shadow-lg overflow-hidden">
             {(loadingProfile || loadingCover || loadingBio || loadingInfo) && <LoaderOverlay />}
             {/* Cover Photo */}
             <div className="relative h-60 bg-gray-200">
