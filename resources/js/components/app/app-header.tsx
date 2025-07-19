@@ -54,36 +54,36 @@ export function AppHeader() {
             href={route('dashboard')}
             className={
               'group flex flex-col items-center justify-center px-3 py-1.5 rounded-md hover:bg-gray-100 ' +
-              (isFeedActive ? 'bg-blue-50 text-blue-600' : '')
+              (isFeedActive ? 'bg-gray-100 text-gray-900' : '')
             }
           >
             <Home className={
-              'h-6 w-6 ' + (isFeedActive ? 'text-blue-600' : 'text-gray-700 group-hover:text-blue-600')
+              'h-6 w-6 ' + (isFeedActive ? 'text-gray-900' : 'text-gray-700 group-hover:text-gray-900')
             } />
           </Link>
           <button className="group flex flex-col items-center justify-center px-3 py-1.5 rounded-md hover:bg-gray-100">
-            <PlaySquare className="h-6 w-6 text-gray-700 group-hover:text-blue-600" />
+            <PlaySquare className="h-6 w-6 text-gray-700 group-hover:text-gray-900" />
           </button>
           <button className="group flex flex-col items-center justify-center px-3 py-1.5 rounded-md hover:bg-gray-100">
-            <Store className="h-6 w-6 text-gray-700 group-hover:text-blue-600" />
+            <Store className="h-6 w-6 text-gray-700 group-hover:text-gray-900" />
           </button>
           <button className="group flex flex-col items-center justify-center px-3 py-1.5 rounded-md hover:bg-gray-100">
-            <Users className="h-6 w-6 text-gray-700 group-hover:text-blue-600" />
+            <Users className="h-6 w-6 text-gray-700 group-hover:text-gray-900" />
           </button>
         </nav>
 
         {/* Right: Messages, Notifications, Profile */}
         <div className="flex items-center gap-2 ml-auto">
           <button className="relative rounded-full p-2 hover:bg-gray-100">
-            <MessageCircle className="h-6 w-6 text-gray-700" />
+            <MessageCircle className="h-6 w-6 text-gray-700 hover:text-gray-900" />
           </button>
           <button className="relative rounded-full p-2 hover:bg-gray-100">
-            <Bell className="h-6 w-6 text-gray-700" />
+            <Bell className="h-6 w-6 text-gray-700 hover:text-gray-900" />
           </button>
           {/* Profile Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="ml-2 rounded-full border-2 border-transparent hover:border-blue-500 focus:outline-none focus:border-blue-500">
+              <button className="ml-2 rounded-full border-2 border-transparent hover:border-gray-400 focus:outline-none focus:border-gray-400 transition-colors">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={auth?.user?.avatar} alt={auth?.user?.name} />
                   <AvatarFallback>{getInitials(auth?.user?.name)}</AvatarFallback>
@@ -110,7 +110,7 @@ export function AppHeader() {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/logout" method="post" as="button" className="flex items-center gap-2">
+                <Link href="/logout" method="post" as="button" className="flex items-center gap-2 block w-full">
                   <LogOut className="h-4 w-4" />
                   Logout
                 </Link>

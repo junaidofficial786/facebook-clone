@@ -39,7 +39,7 @@ export default function CreatePost() {
                         <input type="file" accept="video/*" className="hidden" onChange={e => setMedia(e.target.files?.[0] || null)} />
                     </label>
                 </div>
-                <Button className="w-full font-bold text-base py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-colors">Post</Button>
+                <Button variant="default" className="w-full font-bold text-base py-2 rounded-lg">Post</Button>
             </CardContent>
         </Card>
     );
