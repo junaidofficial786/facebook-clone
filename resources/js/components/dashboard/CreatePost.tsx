@@ -44,7 +44,14 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
                     'X-CSRF-TOKEN': csrfToken,
                 },
             });
-            if (!res.ok) throw new Error('Failed to create post.');
+            if (!res.ok) {
+                let errorMsg = 'Failed to create post.';
+                try {
+                    const data = await res.json();
+                    if (data && data.message) errorMsg = data.message;
+                } catch {}
+                throw new Error(errorMsg);
+            }
             setEditorValue('');
             setMedia([]);
             setPrivacy('public');

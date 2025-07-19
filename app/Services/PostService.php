@@ -15,7 +15,7 @@ class PostService
         $userId = Auth::id();
         $query = Post::with([
             'user:id,name,profile_pic',
-            'postMedia:id,post_id,media_url',
+            'postMedia:id,post_id,media_type,media_url',
             'comments.user:id,name,profile_pic',
             'comments.commentReactions',
             'comments.myCommentReaction',

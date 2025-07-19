@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MessageCircle, ThumbsUp, X, MoreVertical, Bookmark, EyeOff, Flag, Link2, Loader, Globe, Users, Lock } from 'lucide-react';
+import { MessageCircle, ThumbsUp, X, MoreVertical, Bookmark, EyeOff, Flag, Link2, Loader, Globe, Users, Lock, Eye, Download } from 'lucide-react';
 import CreatePost from '@/components/dashboard/CreatePost';
 import axios from 'axios';
 import LoaderOverlay from '@/components/ui/loader';
@@ -33,6 +33,7 @@ export default function Feed() {
     const [loadingReactionUsers, setLoadingReactionUsers] = useState(false);
     const [openMediaDialog, setOpenMediaDialog] = useState<{ postId: number } | null>(null);
     const [expandedPostIds, setExpandedPostIds] = useState<number[]>([]);
+    const [viewMedia, setViewMedia] = useState<{ url: string, type: 'image' | 'video' } | null>(null);
 
     const loadingRef = useRef(loading);
     const hasMoreRef = useRef(hasMore);
@@ -239,24 +240,227 @@ export default function Feed() {
                             <div className="whitespace-pre-line">{post.content}</div>
                             {/* Post images grid */}
                             {post.media && post.media.length > 0 && (
-                                <div className="mt-3 grid grid-cols-2 gap-2">
-                                    {(expandedPostIds.includes(post.id) ? post.media : post.media.slice(0, 4)).map((media: any, idx: number) => (
-                                        <div key={idx} className="relative">
-                                            <img
-                                                src={media.media_url?.startsWith('http') ? media.media_url : `/storage/${media.media_url}`}
-                                                alt="Post Media"
-                                                className="rounded-lg max-h-80 w-full object-cover"
-                                            />
-                                            {!expandedPostIds.includes(post.id) && idx === 3 && post.media.length > 4 && (
-                                                <button
-                                                    className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-lg text-white text-lg font-semibold backdrop-blur-sm"
-                                                    onClick={() => setExpandedPostIds(ids => [...ids, post.id])}
-                                                >
-                                                    View all photos
-                                                </button>
-                                            )}
-                                        </div>
-                                    ))}
+                                <div className="mt-3 w-full">
+                                    {(() => {
+                                        const images = expandedPostIds.includes(post.id) ? post.media : post.media.slice(0, 4);
+                                        if (images.length === 1) {
+                                            const media = images[0];
+                                            return (
+                                                <div className="relative group">
+                                                    {media.media_type === 'video' ? (
+                                                        <video
+                                                            src={media.media_url?.startsWith('http') ? media.media_url : `/storage/${media.media_url}`}
+                                                            className="rounded-lg w-full max-h-[500px] object-cover"
+                                                            controls
+                                                            preload="none"
+                                                        />
+                                                    ) : (
+                                                        <img
+                                                            src={media.media_url?.startsWith('http') ? media.media_url : `/storage/${media.media_url}`}
+                                                            alt="Post Media"
+                                                            className="rounded-lg w-full max-h-[500px] object-cover"
+                                                            loading="lazy"
+                                                        />
+                                                    )}
+                                                    <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                                        <button
+                                                            className="bg-black/60 hover:bg-black/80 text-white rounded-full p-1"
+                                                            onClick={e => { e.preventDefault(); setViewMedia({ url: media.media_url?.startsWith('http') ? media.media_url : `/storage/${media.media_url}`, type: media.media_type }); }}
+                                                            title="View"
+                                                        >
+                                                            <Eye className="w-5 h-5" />
+                                                        </button>
+                                                        <a
+                                                            href={media.media_url?.startsWith('http') ? media.media_url : `/storage/${media.media_url}`}
+                                                            download
+                                                            className="bg-black/60 hover:bg-black/80 text-white rounded-full p-1"
+                                                            title="Download"
+                                                            onClick={e => e.stopPropagation()}
+                                                        >
+                                                            <Download className="w-5 h-5" />
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
+                                        // 2 media
+                                        else if (images.length === 2) {
+                                            return (
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    {images.map((media: any, idx: number) => (
+                                                        <div key={idx} className="relative group">
+                                                            {media.media_type === 'video' ? (
+                                                                <video
+                                                                    src={media.media_url?.startsWith('http') ? media.media_url : `/storage/${media.media_url}`}
+                                                                    className="rounded-lg w-full h-72 object-cover"
+                                                                    controls
+                                                                    preload="none"
+                                                                />
+                                                            ) : (
+                                                                <img
+                                                                    src={media.media_url?.startsWith('http') ? media.media_url : `/storage/${media.media_url}`}
+                                                                    alt="Post Media"
+                                                                    className="rounded-lg w-full h-72 object-cover"
+                                                                    loading="lazy"
+                                                                />
+                                                            )}
+                                                            <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                                                <button
+                                                                    className="bg-black/60 hover:bg-black/80 text-white rounded-full p-1"
+                                                                    onClick={e => { e.preventDefault(); setViewMedia({ url: media.media_url?.startsWith('http') ? media.media_url : `/storage/${media.media_url}`, type: media.media_type }); }}
+                                                                    title="View"
+                                                                >
+                                                                    <Eye className="w-5 h-5" />
+                                                                </button>
+                                                                <a
+                                                                    href={media.media_url?.startsWith('http') ? media.media_url : `/storage/${media.media_url}`}
+                                                                    download
+                                                                    className="bg-black/60 hover:bg-black/80 text-white rounded-full p-1"
+                                                                    title="Download"
+                                                                    onClick={e => e.stopPropagation()}
+                                                                >
+                                                                    <Download className="w-5 h-5" />
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            );
+                                        }
+                                        // 3 media
+                                        else if (images.length === 3) {
+                                            return (
+                                                <div className="grid grid-cols-2 gap-2 h-72">
+                                                    <div className="relative group col-span-1 row-span-2">
+                                                        {images[0].media_type === 'video' ? (
+                                                            <video
+                                                                src={images[0].media_url?.startsWith('http') ? images[0].media_url : `/storage/${images[0].media_url}`}
+                                                                className="rounded-lg w-full h-full object-cover"
+                                                                controls
+                                                                preload="none"
+                                                            />
+                                                        ) : (
+                                                            <img
+                                                                src={images[0].media_url?.startsWith('http') ? images[0].media_url : `/storage/${images[0].media_url}`}
+                                                                alt="Post Media"
+                                                                className="rounded-lg w-full h-full object-cover"
+                                                                loading="lazy"
+                                                            />
+                                                        )}
+                                                        <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                                            <button
+                                                                className="bg-black/60 hover:bg-black/80 text-white rounded-full p-1"
+                                                                onClick={e => { e.preventDefault(); setViewMedia({ url: images[0].media_url?.startsWith('http') ? images[0].media_url : `/storage/${images[0].media_url}`, type: images[0].media_type }); }}
+                                                                title="View"
+                                                            >
+                                                                <Eye className="w-5 h-5" />
+                                                            </button>
+                                                            <a
+                                                                href={images[0].media_url?.startsWith('http') ? images[0].media_url : `/storage/${images[0].media_url}`}
+                                                                download
+                                                                className="bg-black/60 hover:bg-black/80 text-white rounded-full p-1"
+                                                                title="Download"
+                                                                onClick={e => e.stopPropagation()}
+                                                            >
+                                                                <Download className="w-5 h-5" />
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-col gap-2 h-full">
+                                                        {[1, 2].map(i => (
+                                                            <div key={i} className="relative group flex-1">
+                                                                {images[i].media_type === 'video' ? (
+                                                                    <video
+                                                                        src={images[i].media_url?.startsWith('http') ? images[i].media_url : `/storage/${images[i].media_url}`}
+                                                                        className="rounded-lg w-full h-full object-cover"
+                                                                        controls
+                                                                        preload="none"
+                                                                    />
+                                                                ) : (
+                                                                    <img
+                                                                        src={images[i].media_url?.startsWith('http') ? images[i].media_url : `/storage/${images[i].media_url}`}
+                                                                        alt="Post Media"
+                                                                        className="rounded-lg w-full h-full object-cover"
+                                                                        loading="lazy"
+                                                                    />
+                                                                )}
+                                                                <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                                                    <button
+                                                                        className="bg-black/60 hover:bg-black/80 text-white rounded-full p-1"
+                                                                        onClick={e => { e.preventDefault(); setViewMedia({ url: images[i].media_url?.startsWith('http') ? images[i].media_url : `/storage/${images[i].media_url}`, type: images[i].media_type }); }}
+                                                                        title="View"
+                                                                    >
+                                                                        <Eye className="w-5 h-5" />
+                                                                    </button>
+                                                                    <a
+                                                                        href={images[i].media_url?.startsWith('http') ? images[i].media_url : `/storage/${images[i].media_url}`}
+                                                                        download
+                                                                        className="bg-black/60 hover:bg-black/80 text-white rounded-full p-1"
+                                                                        title="Download"
+                                                                        onClick={e => e.stopPropagation()}
+                                                                    >
+                                                                        <Download className="w-5 h-5" />
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
+                                        // 4 or more
+                                        else {
+                                            return (
+                                                <div className="grid grid-cols-2 grid-rows-2 gap-2">
+                                                    {images.map((media: any, idx: number) => (
+                                                        <div key={idx} className="relative group">
+                                                            {media.media_type === 'video' ? (
+                                                                <video
+                                                                    src={media.media_url?.startsWith('http') ? media.media_url : `/storage/${media.media_url}`}
+                                                                    className="rounded-lg w-full h-48 object-cover"
+                                                                    controls
+                                                                    preload="none"
+                                                                />
+                                                            ) : (
+                                                                <img
+                                                                    src={media.media_url?.startsWith('http') ? media.media_url : `/storage/${media.media_url}`}
+                                                                    alt="Post Media"
+                                                                    className="rounded-lg w-full h-48 object-cover"
+                                                                    loading="lazy"
+                                                                />
+                                                            )}
+                                                            {!expandedPostIds.includes(post.id) && idx === 3 && post.media.length > 4 && (
+                                                                <button
+                                                                    className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-lg text-white text-lg font-semibold backdrop-blur-sm"
+                                                                    onClick={() => setExpandedPostIds(ids => [...ids, post.id])}
+                                                                >
+                                                                    +{post.media.length - 4} more
+                                                                </button>
+                                                            )}
+                                                            <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                                                <button
+                                                                    className="bg-black/60 hover:bg-black/80 text-white rounded-full p-1"
+                                                                    onClick={e => { e.preventDefault(); setViewMedia({ url: media.media_url?.startsWith('http') ? media.media_url : `/storage/${media.media_url}`, type: media.media_type }); }}
+                                                                    title="View"
+                                                                >
+                                                                    <Eye className="w-5 h-5" />
+                                                                </button>
+                                                                <a
+                                                                    href={media.media_url?.startsWith('http') ? media.media_url : `/storage/${media.media_url}`}
+                                                                    download
+                                                                    className="bg-black/60 hover:bg-black/80 text-white rounded-full p-1"
+                                                                    title="Download"
+                                                                    onClick={e => e.stopPropagation()}
+                                                                >
+                                                                    <Download className="w-5 h-5" />
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            );
+                                        }
+                                    })()}
                                 </div>
                             )}
                             {/* All Photos Dialog */}
@@ -264,7 +468,7 @@ export default function Feed() {
                                 <CustomDialog open={true} onClose={() => setOpenMediaDialog(null)} title="All Photos">
                                     <div className="grid grid-cols-2 gap-2">
                                         {post.media.map((media: any, idx: number) => (
-                                            <img key={idx} src={media.media_url?.startsWith('http') ? media.media_url : `/storage/${media.media_url}`} alt="Post Media" className="rounded-lg max-h-80 w-full object-cover" />
+                                            <img key={idx} src={media.media_url?.startsWith('http') ? media.media_url : `/storage/${media.media_url}`} alt="Post Media" className="rounded-lg max-h-80 w-full object-cover" loading="lazy" />
                                         ))}
                                     </div>
                                 </CustomDialog>
@@ -407,6 +611,21 @@ export default function Feed() {
                 {loading && <div className="text-center py-4 text-muted-foreground">Loading...</div>}
                 {!hasMore && <div className="text-center py-4 text-muted-foreground">No more posts</div>}
             </div>
+            {/* Media View Modal */}
+            {viewMedia && (
+                <Dialog open={!!viewMedia} onOpenChange={open => !open && setViewMedia(null)}>
+                    <DialogContent className="max-w-3xl flex flex-col items-center justify-center">
+                        <button className="absolute top-2 right-2 z-20 bg-black/60 hover:bg-black/80 text-white rounded-full p-2" onClick={() => setViewMedia(null)}>
+                            <X className="w-6 h-6" />
+                        </button>
+                        {viewMedia.type === 'image' ? (
+                            <img src={viewMedia.url} alt="View Media" className="max-h-[80vh] max-w-full rounded-lg" loading="lazy" />
+                        ) : (
+                            <video src={viewMedia.url} controls autoPlay className="max-h-[80vh] max-w-full rounded-lg" preload="none" />
+                        )}
+                    </DialogContent>
+                </Dialog>
+            )}
         </>
     );
 }
