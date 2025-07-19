@@ -6,7 +6,11 @@ import { useToast } from '@/components/ui/toast';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import LoaderOverlay from '@/components/ui/loader';
 
-export default function CreatePost() {
+interface CreatePostProps {
+    onPostCreated?: () => void;
+}
+
+export default function CreatePost({ onPostCreated }: CreatePostProps) {
     const [editorValue, setEditorValue] = useState('');
     const [media, setMedia] = useState<File[]>([]);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -45,6 +49,7 @@ export default function CreatePost() {
             setMedia([]);
             setPrivacy('public');
             showToast('Post created successfully!');
+            if (onPostCreated) onPostCreated();
         } catch (err: any) {
             showToast(err.message || 'Something went wrong. Please try again.');
         } finally {

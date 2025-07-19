@@ -41,11 +41,19 @@ export default function Feed() {
     const didLogRef = useRef(false);
     const feedContainerRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        if (!didLogRef.current) {
-            console.log('center-column page');
-            didLogRef.current = true;
+    const fetchPosts = async () => {
+        try {
+            const res = await axios.get('/api/posts');
+            setPosts(res.data.data || []);
+            setHasMore(res.data.next_page_url !== null);
+            setPage(1);
+        } catch (e) {
+            // Optionally handle error
         }
+    };
+
+    useEffect(() => {
+        fetchPosts();
     }, []);
 
     useEffect(() => {
@@ -154,7 +162,7 @@ export default function Feed() {
             {deleting && <LoaderOverlay />}
             {showToast && <Toast message={toastMessage} onClose={() => setShowToast(false)} />}
             <div ref={feedContainerRef} className="flex flex-col gap-6 h-full min-h-0 overflow-y-auto scrollbar-hide">
-                <CreatePost />
+                <CreatePost onPostCreated={fetchPosts} />
 
                 {posts && posts.length > 0 ? posts.map((post: any) => (
                     <Card key={post.id}>
@@ -235,7 +243,7 @@ export default function Feed() {
                                     {(expandedPostIds.includes(post.id) ? post.media : post.media.slice(0, 4)).map((media: any, idx: number) => (
                                         <div key={idx} className="relative">
                                             <img
-                                                src={media.media_url}
+                                                src={media.media_url?.startsWith('http') ? media.media_url : `/storage/${media.media_url}`}
                                                 alt="Post Media"
                                                 className="rounded-lg max-h-80 w-full object-cover"
                                             />
@@ -256,7 +264,7 @@ export default function Feed() {
                                 <CustomDialog open={true} onClose={() => setOpenMediaDialog(null)} title="All Photos">
                                     <div className="grid grid-cols-2 gap-2">
                                         {post.media.map((media: any, idx: number) => (
-                                            <img key={idx} src={media.media_url} alt="Post Media" className="rounded-lg max-h-80 w-full object-cover" />
+                                            <img key={idx} src={media.media_url?.startsWith('http') ? media.media_url : `/storage/${media.media_url}`} alt="Post Media" className="rounded-lg max-h-80 w-full object-cover" />
                                         ))}
                                     </div>
                                 </CustomDialog>
