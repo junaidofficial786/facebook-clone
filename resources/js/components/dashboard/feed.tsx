@@ -11,6 +11,7 @@ import axios from 'axios';
 import LoaderOverlay from '@/components/ui/loader';
 import Toast from '@/components/ui/toast';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogClose } from '@/components/ui/dialog';
+import CustomDialog from '@/components/ui/CustomDialog';
 
 export default function Feed() {
     const [editorValue, setEditorValue] = useState('');
@@ -262,27 +263,22 @@ export default function Feed() {
                                 </Button>
                                 {/* Reaction Users Dialog */}
                                 {openReactionDialog && openReactionDialog.postId === post.id && (
-                                    <Dialog open={true} onOpenChange={closeReactionDialog}>
-                                        <DialogContent>
-                                            <DialogHeader>
-                                                <DialogTitle>Users who reacted</DialogTitle>
-                                            </DialogHeader>
-                                            {loadingReactionUsers ? (
-                                                <div className="py-4 text-center">Loading...</div>
-                                            ) : reactionUsers.length > 0 ? (
-                                                <ul className="py-2">
-                                                    {reactionUsers.map((user: any) => (
-                                                        <li key={user.id} className="py-1 flex items-center gap-2">
-                                                            <Avatar className="h-6 w-6"><AvatarImage src={user.profile_pic} alt={user.name} /><AvatarFallback>{user.name?.[0]}</AvatarFallback></Avatar>
-                                                            <span>{user.name}</span>
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            ) : (
-                                                <div className="py-4 text-center text-muted-foreground">No users found.</div>
-                                            )}
-                                        </DialogContent>
-                                    </Dialog>
+                                    <CustomDialog open={true} onClose={closeReactionDialog} title="Users who reacted">
+                                        {loadingReactionUsers ? (
+                                            <div className="py-4 text-center">Loading...</div>
+                                        ) : reactionUsers.length > 0 ? (
+                                            <ul className="py-2">
+                                                {reactionUsers.map((user: any) => (
+                                                    <li key={user.id} className="py-1 flex items-center gap-2">
+                                                        <Avatar className="h-6 w-6"><AvatarImage src={user.profile_pic} alt={user.name} /><AvatarFallback>{user.name?.[0]}</AvatarFallback></Avatar>
+                                                        <span>{user.name}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        ) : (
+                                            <div className="py-4 text-center text-muted-foreground">No users found.</div>
+                                        )}
+                                    </CustomDialog>
                                 )}
                                 <div className="flex items-center gap-1 bg-gray-100 text-gray-700 rounded-full px-2 py-0.5 text-xs font-medium">
                                     <MessageCircle className="h-4 w-4" />
@@ -331,27 +327,22 @@ export default function Feed() {
                                                     )}
                                                     {/* Comment Reaction Users Dialog */}
                                                     {openReactionDialog && openReactionDialog.commentId === comment.id && (
-                                                        <Dialog open={true} onOpenChange={closeReactionDialog}>
-                                                            <DialogContent>
-                                                                <DialogHeader>
-                                                                    <DialogTitle>Users who reacted</DialogTitle>
-                                                                </DialogHeader>
-                                                                {loadingReactionUsers ? (
-                                                                    <div className="py-4 text-center">Loading...</div>
-                                                                ) : reactionUsers.length > 0 ? (
-                                                                    <ul className="py-2">
-                                                                        {reactionUsers.map((user: any) => (
-                                                                            <li key={user.id} className="py-1 flex items-center gap-2">
-                                                                                <Avatar className="h-6 w-6"><AvatarImage src={user.profile_pic} alt={user.name} /><AvatarFallback>{user.name?.[0]}</AvatarFallback></Avatar>
-                                                                                <span>{user.name}</span>
-                                                                            </li>
-                                                                        ))}
-                                                                    </ul>
-                                                                ) : (
-                                                                    <div className="py-4 text-center text-muted-foreground">No users found.</div>
-                                                                )}
-                                                            </DialogContent>
-                                                        </Dialog>
+                                                        <CustomDialog open={true} onClose={closeReactionDialog} title="Users who reacted">
+                                                            {loadingReactionUsers ? (
+                                                                <div className="py-4 text-center">Loading...</div>
+                                                            ) : reactionUsers.length > 0 ? (
+                                                                <ul className="py-2">
+                                                                    {reactionUsers.map((user: any) => (
+                                                                        <li key={user.id} className="py-1 flex items-center gap-2">
+                                                                            <Avatar className="h-6 w-6"><AvatarImage src={user.profile_pic} alt={user.name} /><AvatarFallback>{user.name?.[0]}</AvatarFallback></Avatar>
+                                                                            <span>{user.name}</span>
+                                                                        </li>
+                                                                    ))}
+                                                                </ul>
+                                                            ) : (
+                                                                <div className="py-4 text-center text-muted-foreground">No users found.</div>
+                                                            )}
+                                                        </CustomDialog>
                                                     )}
                                                     <Button
                                                         variant="ghost"
