@@ -1,4 +1,3 @@
-import AppLogoIcon from '@/components/app-logo-icon';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -22,11 +21,13 @@ import {
 } from 'lucide-react';
 import { usePage, Link } from '@inertiajs/react';
 import { useInitials } from '@/hooks/use-initials';
+import.meta.env;
 
 export function AppHeader() {
   const page = usePage();
   const { auth } = page.props;
   const getInitials = useInitials();
+  const appName = import.meta.env.VITE_APP_NAME || 'FacebookClone';
 
   // Determine if /feed is active
   const isFeedActive = typeof window !== 'undefined' && window.location.pathname.startsWith('/feed');
@@ -36,7 +37,10 @@ export function AppHeader() {
       <div className="mx-auto flex h-16 items-center gap-2 px-4 md:max-w-7xl">
         {/* Left: Logo */}
         <Link href={route('dashboard')} className="flex items-center mr-2">
-          <AppLogoIcon className="h-8 w-8 text-blue-600" />
+          {/* <AppLogoIcon className="h-8 w-8 text-blue-600" /> */}
+          <span className="text-2xl font-extrabold italic tracking-wide bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500 bg-clip-text text-transparent drop-shadow-sm select-none">
+            {appName}
+          </span>
         </Link>
 
         {/* Search Box */}

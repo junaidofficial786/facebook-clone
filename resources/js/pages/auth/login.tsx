@@ -115,7 +115,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
 
                     <Button
                         type="submit"
-                        className="mt-2 h-12 w-full rounded-full text-base font-semibold shadow-lg bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:from-primary/90 hover:to-primary/80 transition-all duration-200"
+                        variant="default"
                         tabIndex={4}
                         disabled={processing}
                     >
