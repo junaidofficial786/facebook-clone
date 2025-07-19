@@ -15,6 +15,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // API endpoint for infinite scroll
     Route::get('api/posts', [FeedController::class, 'apiIndex'])->name('api.posts');
     Route::delete('posts/{post}', [FeedController::class, 'destroy'])->name('posts.destroy');
+    Route::get('posts/{post}/reactions/{reaction}', [FeedController::class, 'reactionUsers']);
 });
 
 Route::get('/event', function () {

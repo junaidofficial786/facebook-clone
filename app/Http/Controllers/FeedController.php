@@ -36,4 +36,16 @@ class FeedController extends Controller
         $post->delete();
         return response()->json(['success' => true]);
     }
+
+    public function reactionUsers(Post $post, $reactionId)
+    {
+        $users = $post->postReactions()
+            ->where('reaction_id', $reactionId)
+            ->with('user:id,name,profile_pic')
+            ->get()
+            ->pluck('user')
+            ->filter()
+            ->values();
+        return response()->json(['users' => $users]);
+    }
 }

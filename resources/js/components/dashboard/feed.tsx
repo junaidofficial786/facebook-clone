@@ -27,6 +27,9 @@ export default function Feed() {
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [confirmDeleteId, setConfirmDeleteId] = useState<number|null>(null);
+    const [openReactionDialog, setOpenReactionDialog] = useState<{ postId: number, reactionId: number } | null>(null);
+    const [reactionUsers, setReactionUsers] = useState<any[]>([]);
+    const [loadingReactionUsers, setLoadingReactionUsers] = useState(false);
 
     const loadingRef = useRef(loading);
     const hasMoreRef = useRef(hasMore);
@@ -103,6 +106,22 @@ export default function Feed() {
 
     const openDeleteDialog = (postId: number) => setConfirmDeleteId(postId);
     const closeDeleteDialog = () => setConfirmDeleteId(null);
+
+    const handleEmojiClick = async (postId: number, reactionId: number) => {
+        setOpenReactionDialog({ postId, reactionId });
+        setLoadingReactionUsers(true);
+        try {
+            const res = await axios.get(`/posts/${postId}/reactions/${reactionId}`);
+            setReactionUsers(res.data.users || []);
+        } catch (e) {
+            setReactionUsers([]);
+        }
+        setLoadingReactionUsers(false);
+    };
+    const closeReactionDialog = () => {
+        setOpenReactionDialog(null);
+        setReactionUsers([]);
+    };
 
     // Scroll listener on feed container
     useEffect(() => {
@@ -216,10 +235,50 @@ export default function Feed() {
                                     variant="ghost"
                                     size="sm"
                                     className={`flex items-center gap-1 cursor-pointer ${post.liked_by_me ? 'text-blue-600' : ''}`}
+                                    onClick={() => {/* like logic yahan */}}
                                 >
                                     <ThumbsUp className={`h-4 w-4 ${post.liked_by_me ? 'text-blue-600' : 'text-gray-700'}`} />
-                                    {post.reactions_count || 0} Like
+                                    <span>{post.reactions_count || 0} Like</span>
+                                    {/* Distinct reaction emojis */}
+                                    {post.reactions_summary && post.reactions_summary.length > 0 && (
+                                        <span className="flex items-center gap-0.5 ml-2">
+                                            {post.reactions_summary.map((r: any) => (
+                                                <span
+                                                    key={r.reaction_id}
+                                                    title={r.name}
+                                                    className="text-lg cursor-pointer px-1 rounded hover:bg-gray-200"
+                                                    onClick={e => { e.stopPropagation(); handleEmojiClick(post.id, r.reaction_id); }}
+                                                >
+                                                    {r.icon}
+                                                </span>
+                                            ))}
+                                        </span>
+                                    )}
                                 </Button>
+                                {/* Reaction Users Dialog */}
+                                {openReactionDialog && openReactionDialog.postId === post.id && (
+                                    <Dialog open={true} onOpenChange={closeReactionDialog}>
+                                        <DialogContent>
+                                            <DialogHeader>
+                                                <DialogTitle>Users who reacted</DialogTitle>
+                                            </DialogHeader>
+                                            {loadingReactionUsers ? (
+                                                <div className="py-4 text-center">Loading...</div>
+                                            ) : reactionUsers.length > 0 ? (
+                                                <ul className="py-2">
+                                                    {reactionUsers.map((user: any) => (
+                                                        <li key={user.id} className="py-1 flex items-center gap-2">
+                                                            <Avatar className="h-6 w-6"><AvatarImage src={user.profile_pic} alt={user.name} /><AvatarFallback>{user.name?.[0]}</AvatarFallback></Avatar>
+                                                            <span>{user.name}</span>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            ) : (
+                                                <div className="py-4 text-center text-muted-foreground">No users found.</div>
+                                            )}
+                                        </DialogContent>
+                                    </Dialog>
+                                )}
                                 <div className="flex items-center gap-1 bg-gray-100 text-gray-700 rounded-full px-2 py-0.5 text-xs font-medium">
                                     <MessageCircle className="h-4 w-4" />
                                     {post.comments?.length || 0}
