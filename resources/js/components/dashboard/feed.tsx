@@ -31,6 +31,8 @@ export default function Feed() {
     const [openReactionDialog, setOpenReactionDialog] = useState<{ postId?: number, commentId?: number, reactionId: number } | null>(null);
     const [reactionUsers, setReactionUsers] = useState<any[]>([]);
     const [loadingReactionUsers, setLoadingReactionUsers] = useState(false);
+    const [openMediaDialog, setOpenMediaDialog] = useState<{ postId: number } | null>(null);
+    const [expandedPostIds, setExpandedPostIds] = useState<number[]>([]);
 
     const loadingRef = useRef(loading);
     const hasMoreRef = useRef(hasMore);
@@ -227,12 +229,37 @@ export default function Feed() {
                         </CardHeader>
                         <CardContent>
                             <div className="whitespace-pre-line">{post.content}</div>
+                            {/* Post images grid */}
                             {post.media && post.media.length > 0 && (
                                 <div className="mt-3 grid grid-cols-2 gap-2">
-                                    {post.media.map((media: any, idx: number) => (
-                                        <img key={idx} src={media.media_url} alt="Post Media" className="rounded-lg max-h-80 w-full object-cover" />
+                                    {(expandedPostIds.includes(post.id) ? post.media : post.media.slice(0, 4)).map((media: any, idx: number) => (
+                                        <div key={idx} className="relative">
+                                            <img
+                                                src={media.media_url}
+                                                alt="Post Media"
+                                                className="rounded-lg max-h-80 w-full object-cover"
+                                            />
+                                            {!expandedPostIds.includes(post.id) && idx === 3 && post.media.length > 4 && (
+                                                <button
+                                                    className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-lg text-white text-lg font-semibold backdrop-blur-sm"
+                                                    onClick={() => setExpandedPostIds(ids => [...ids, post.id])}
+                                                >
+                                                    View all photos
+                                                </button>
+                                            )}
+                                        </div>
                                     ))}
                                 </div>
+                            )}
+                            {/* All Photos Dialog */}
+                            {openMediaDialog && openMediaDialog.postId === post.id && (
+                                <CustomDialog open={true} onClose={() => setOpenMediaDialog(null)} title="All Photos">
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {post.media.map((media: any, idx: number) => (
+                                            <img key={idx} src={media.media_url} alt="Post Media" className="rounded-lg max-h-80 w-full object-cover" />
+                                        ))}
+                                    </div>
+                                </CustomDialog>
                             )}
                         </CardContent>
                         <CardFooter className="flex flex-col gap-2">
