@@ -37,12 +37,13 @@ class CommentService
             ->values();
     }
 
-    public static function storeComment($user, $post, $content)
+    public static function storeComment($user, $post, $content, $parentId = null)
     {
         $comment = Comment::create([
             'user_id' => $user->id,
             'post_id' => $post->id,
             'content' => $content,
+            'parent_id' => $parentId,
         ]);
         return $comment;
     }

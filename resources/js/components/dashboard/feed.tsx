@@ -45,6 +45,9 @@ export default function Feed() {
     // Add state for comment input per post
     const [commentInputs, setCommentInputs] = useState<{ [postId: number]: string }>({});
 
+    // Add state for reply input per comment
+    const [replyInputs, setReplyInputs] = useState<{ [commentId: number]: string }>({});
+
     // Handle input change
     const handleCommentInputChange = (postId: number, value: string) => {
         setCommentInputs(inputs => ({ ...inputs, [postId]: value }));
@@ -66,6 +69,31 @@ export default function Feed() {
             setCommentInputs(inputs => ({ ...inputs, [postId]: '' }));
         } catch (e) {
             setToastMessage('Unable to add comment.');
+            setShowToast(true);
+        }
+    };
+
+    // Handle reply input change
+    const handleReplyInputChange = (commentId: number, value: string) => {
+        setReplyInputs(inputs => ({ ...inputs, [commentId]: value }));
+    };
+
+    // Handle reply submit
+    const handleReplySubmit = async (postId: number, parentCommentId: number) => {
+        const content = replyInputs[parentCommentId]?.trim();
+        if (!content) return;
+        try {
+            const res = await axios.post(`/api/posts/${postId}/comments`, { content, parent_id: parentCommentId });
+            setPosts((posts: any[]) =>
+                posts.map((post: any) =>
+                    post.id === postId
+                        ? { ...post, comments: [...(post.comments || []), res.data.comment] }
+                        : post
+                )
+            );
+            setReplyInputs(inputs => ({ ...inputs, [parentCommentId]: '' }));
+        } catch (e) {
+            setToastMessage('Unable to add reply.');
             setShowToast(true);
         }
     };
@@ -758,8 +786,27 @@ export default function Feed() {
                                                 </Button>
                                             </div>
                                             {replyingTo === comment.id && (
-                                                <div className="mt-2">
-                                                    <Input placeholder={`Reply to ${comment.user?.name}...`} className="h-8 text-sm" autoFocus />
+                                                <div className="mt-2 flex gap-2">
+                                                    <Input
+                                                        placeholder={`Reply to ${comment.user?.name}...`}
+                                                        className="h-8 text-sm"
+                                                        value={replyInputs[comment.id] || ''}
+                                                        onChange={e => handleReplyInputChange(comment.id, e.target.value)}
+                                                        onKeyDown={e => {
+                                                            if (e.key === 'Enter' && !e.shiftKey) {
+                                                                e.preventDefault();
+                                                                handleReplySubmit(post.id, comment.id);
+                                                            }
+                                                        }}
+                                                    />
+                                                    <Button
+                                                        variant="default"
+                                                        onClick={() => handleReplySubmit(post.id, comment.id)}
+                                                        disabled={!(replyInputs[comment.id] && replyInputs[comment.id].trim())}
+                                                        className="h-8"
+                                                    >
+                                                        Reply
+                                                    </Button>
                                                 </div>
                                             )}
                                         </div>
