@@ -163,7 +163,7 @@ export default function Feed() {
         <>
             {deleting && <LoaderOverlay />}
             {showToast && <Toast message={toastMessage} onClose={() => setShowToast(false)} />}
-            <div ref={feedContainerRef} className="flex flex-col gap-6 h-full min-h-0 overflow-y-auto feed-scroll">
+            <div ref={feedContainerRef} className="flex flex-col gap-6 h-full min-h-0 max-h-screen overflow-y-auto feed-scroll">
                 <CreatePost onPostCreated={fetchPosts} />
 
                 {posts && posts.length > 0 ? posts.map((post: any) => (
