@@ -31,10 +31,19 @@ class PostService
             $post->created_at_human = $post->created_at->diffForHumans();
             $post->media = $post->postMedia;
             $post->liked_by_me = $userId ? $post->postReactions->isNotEmpty() : false;
+            $myReaction = $post->postReactions->first();
+            $post->my_reaction = $myReaction && $myReaction->reaction ? [
+                'name' => $myReaction->reaction->name,
+                'icon' => $myReaction->reaction->icon,
+            ] : null;
             $post->comments = $post->comments->map(function ($comment) use ($userId) {
                 $comment->likes_count = $comment->commentReactions->count();
                 $comment->created_at_human = $comment->created_at->diffForHumans();
                 $comment->liked_by_me = $comment->myCommentReaction !== null;
+                $comment->my_reaction = $comment->myCommentReaction && $comment->myCommentReaction->reaction ? [
+                    'name' => $comment->myCommentReaction->reaction->name,
+                    'icon' => $comment->myCommentReaction->reaction->icon,
+                ] : null;
                 // Comment reaction summary
                 $reactionSummary = $comment->commentReactions()
                     ->selectRaw('reaction_id, COUNT(*) as count')

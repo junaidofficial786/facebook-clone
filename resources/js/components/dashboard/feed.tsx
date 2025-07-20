@@ -486,23 +486,12 @@ export default function Feed() {
                                     className={`flex items-center gap-1 cursor-pointer ${post.liked_by_me ? 'text-blue-600' : ''}`}
                                     onClick={() => {/* like logic yahan */}}
                                 >
-                                    <ThumbsUp className={`h-4 w-4 ${post.liked_by_me ? 'text-blue-600' : 'text-gray-700'}`} />
-                                    <span>{post.reactions_count || 0} Like</span>
-                                    {/* Distinct reaction emojis */}
-                                    {post.reactions_summary && post.reactions_summary.length > 0 && (
-                                        <span className="flex items-center gap-0.5 ml-2">
-                                            {post.reactions_summary.map((r: any) => (
-                                                <span
-                                                    key={r.reaction_id}
-                                                    title={r.name}
-                                                    className="text-lg cursor-pointer px-1 rounded hover:bg-gray-200"
-                                                    onClick={e => { e.stopPropagation(); handleEmojiClick(post.id, r.reaction_id); }}
-                                                >
-                                                    {r.icon}
-                                                </span>
-                                            ))}
-                                        </span>
+                                    {post.my_reaction && post.my_reaction.icon ? (
+                                        <span className="text-xl">{post.my_reaction.icon}</span>
+                                    ) : (
+                                        <ThumbsUp className={`h-4 w-4 ${post.liked_by_me ? 'text-blue-600' : 'text-gray-700'}`} />
                                     )}
+                                    <span>{post.my_reaction ? post.my_reaction.name : 'Like'}</span>
                                 </Button>
                                 {/* Reaction Users Dialog */}
                                 {openReactionDialog && openReactionDialog.postId === post.id && (
@@ -528,6 +517,26 @@ export default function Feed() {
                                     {post.comments?.length || 0}
                                 </div>
                             </div>
+                            {/* Reactions below Like button */}
+                            {post.reactions_summary && post.reactions_summary.length > 0 && (
+                                <div className="flex flex-wrap items-center gap-2 mt-1">
+                                    <span className="flex items-center gap-1">
+                                        {post.reactions_summary.map((r: any) => (
+                                            <span
+                                                key={r.reaction_id}
+                                                title={r.name}
+                                                className="text-lg cursor-pointer px-1 rounded hover:bg-gray-200"
+                                                onClick={e => { e.stopPropagation(); handleEmojiClick(post.id, r.reaction_id); }}
+                                            >
+                                                {r.icon}
+                                            </span>
+                                        ))}
+                                    </span>
+                                    <span className="text-xs text-muted-foreground ml-2">
+                                        {post.reactions_count} user{post.reactions_count !== 1 ? 's' : ''} reacted to this post
+                                    </span>
+                                </div>
+                            )}
 
                             {post.comments && post.comments.length > 0 && (
                                 <div className="mt-2 flex flex-col gap-3">
@@ -550,8 +559,12 @@ export default function Feed() {
                                                         className={`px-2 py-0.5 text-xs h-7 cursor-pointer ${comment.liked_by_me ? 'text-blue-600' : ''}`}
                                                         onClick={() => alert('Like functionality coming soon!')}
                                                     >
-                                                        <ThumbsUp className={`h-3.5 w-3.5 mr-1 ${comment.liked_by_me ? 'text-blue-600' : 'text-gray-700'}`} />
-                                                        Like
+                                                        {comment.my_reaction && comment.my_reaction.icon ? (
+                                                            <span className="text-lg">{comment.my_reaction.icon}</span>
+                                                        ) : (
+                                                            <ThumbsUp className={`h-3.5 w-3.5 mr-1 ${comment.liked_by_me ? 'text-blue-600' : 'text-gray-700'}`} />
+                                                        )}
+                                                        <span>{comment.my_reaction ? comment.my_reaction.name : 'Like'}</span>
                                                     </Button>
                                                     {/* Comment reactions summary */}
                                                     {comment.reactions_summary && comment.reactions_summary.length > 0 && (
