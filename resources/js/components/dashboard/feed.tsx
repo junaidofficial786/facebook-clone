@@ -28,16 +28,19 @@ export default function Feed() {
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
-    const [confirmDeleteId, setConfirmDeleteId] = useState<number|null>(null);
+    const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
     const [openReactionDialog, setOpenReactionDialog] = useState<{ postId?: number, commentId?: number, reactionId: number } | null>(null);
     const [reactionUsers, setReactionUsers] = useState<any[]>([]);
     const [loadingReactionUsers, setLoadingReactionUsers] = useState(false);
     const [openMediaDialog, setOpenMediaDialog] = useState<{ postId: number } | null>(null);
     const [expandedPostIds, setExpandedPostIds] = useState<number[]>([]);
     const [viewMedia, setViewMedia] = useState<{ url: string, type: 'image' | 'video' } | null>(null);
-    const [reactions, setReactions] = useState<{id:number, name:string, icon:string}[]>([]);
-    const [reactingPostId, setReactingPostId] = useState<number|null>(null);
+    const [reactions, setReactions] = useState<{ id: number, name: string, icon: string }[]>([]);
+    const [reactingPostId, setReactingPostId] = useState<number | null>(null);
     const [hoveredPostId, setHoveredPostId] = useState<number | null>(null);
+    // Add state for hovered comment
+    const [hoveredCommentId, setHoveredCommentId] = useState<number | null>(null);
+    const commentHoverTimeout = useRef<NodeJS.Timeout | null>(null);
 
     const loadingRef = useRef(loading);
     const hasMoreRef = useRef(hasMore);
@@ -150,27 +153,27 @@ export default function Feed() {
     };
 
     const handleReact = async (postId: number, reactionId: number, currentReactionId?: number) => {
-      setReactingPostId(postId);
-      try {
-        if (currentReactionId === reactionId) {
-          await handleUnreact(postId);
-        } else {
-          await axios.post(`/api/posts/${postId}/react`, { reaction_id: reactionId });
-          await fetchPosts();
+        setReactingPostId(postId);
+        try {
+            if (currentReactionId === reactionId) {
+                await handleUnreact(postId);
+            } else {
+                await axios.post(`/api/posts/${postId}/react`, { reaction_id: reactionId });
+                await fetchPosts();
+            }
+        } finally {
+            setReactingPostId(null);
         }
-      } finally {
-        setReactingPostId(null);
-      }
     };
 
     const handleUnreact = async (postId: number) => {
-      setReactingPostId(postId);
-      try {
-        await axios.delete(`/api/posts/${postId}/react`);
-        await fetchPosts();
-      } finally {
-        setReactingPostId(null);
-      }
+        setReactingPostId(postId);
+        try {
+            await axios.delete(`/api/posts/${postId}/react`);
+            await fetchPosts();
+        } finally {
+            setReactingPostId(null);
+        }
     };
 
     const handleMouseEnter = (postId: number) => {
@@ -180,6 +183,30 @@ export default function Feed() {
     const handleMouseLeave = () => {
         if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
         hoverTimeout.current = setTimeout(() => setHoveredPostId(null), 600);
+    };
+
+    const handleCommentReact = async (commentId: number, reactionId: number, currentReactionId?: number) => {
+        setReactingPostId(commentId); // reuse for comment
+        try {
+            if (currentReactionId === reactionId) {
+                await axios.delete(`/api/comments/${commentId}/react`);
+                await fetchPosts();
+            } else {
+                await axios.post(`/api/comments/${commentId}/react`, { reaction_id: reactionId });
+                await fetchPosts();
+            }
+        } finally {
+            setReactingPostId(null);
+        }
+    };
+
+    const handleCommentMouseEnter = (commentId: number) => {
+        if (commentHoverTimeout.current) clearTimeout(commentHoverTimeout.current);
+        setHoveredCommentId(commentId);
+    };
+    const handleCommentMouseLeave = () => {
+        if (commentHoverTimeout.current) clearTimeout(commentHoverTimeout.current);
+        commentHoverTimeout.current = setTimeout(() => setHoveredCommentId(null), 600);
     };
 
     // Scroll listener on feed container
@@ -617,19 +644,42 @@ export default function Feed() {
                                             </div>
                                             <div className="text-sm text-gray-700 whitespace-pre-line">{comment.content}</div>
                                             <div className="flex gap-3 mt-1 items-center">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className={`px-2 py-0.5 text-xs h-7 cursor-pointer ${comment.liked_by_me ? 'text-blue-600' : ''}`}
-                                                    onClick={() => alert('Like functionality coming soon!')}
+                                                <div
+                                                    className="relative w-fit"
+                                                    onMouseEnter={() => handleCommentMouseEnter(comment.id)}
+                                                    onMouseLeave={handleCommentMouseLeave}
                                                 >
-                                                    {comment.my_reaction && comment.my_reaction.icon ? (
-                                                        <span className="text-lg">{comment.my_reaction.icon}</span>
-                                                    ) : (
-                                                        <ThumbsUp className={`h-3.5 w-3.5 mr-1 ${comment.liked_by_me ? 'text-blue-600' : 'text-gray-700'}`} />
+                                                    {hoveredCommentId === comment.id && (
+                                                        <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-10 flex gap-2 bg-white dark:bg-gray-800 rounded-full shadow px-3 py-1 border border-gray-200 dark:border-gray-700 transition-all">
+                                                            {reactions.map(r => (
+                                                                <button
+                                                                    key={r.id}
+                                                                    className={`text-xl hover:scale-125 transition-transform duration-100${comment.my_reaction && comment.my_reaction.name === r.name ? ' ring-2 ring-blue-400' : ''}`}
+                                                                    title={r.name}
+                                                                    onClick={() => handleCommentReact(comment.id, r.id, comment.my_reaction?.name === r.name ? r.id : undefined)}
+                                                                    type="button"
+                                                                    disabled={reactingPostId === comment.id}
+                                                                >
+                                                                    {r.icon}
+                                                                </button>
+                                                            ))}
+                                                        </div>
                                                     )}
-                                                    <span>{comment.my_reaction ? comment.my_reaction.name : 'Like'}</span>
-                                                </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className={`px-2 py-0.5 text-xs h-7 cursor-pointer ${comment.liked_by_me ? 'text-blue-600' : ''}`}
+                                                        onClick={() => comment.liked_by_me ? handleCommentReact(comment.id, comment.my_reaction?.id, comment.my_reaction?.id) : handleCommentReact(comment.id, reactions.find(r => r.name === 'Like')?.id || reactions[0]?.id)}
+                                                        disabled={reactingPostId === comment.id}
+                                                    >
+                                                        {comment.my_reaction && comment.my_reaction.icon ? (
+                                                            <span className="text-lg">{comment.my_reaction.icon}</span>
+                                                        ) : (
+                                                            <ThumbsUp className={`h-3.5 w-3.5 mr-1 ${comment.liked_by_me ? 'text-blue-600' : 'text-gray-700'}`} />
+                                                        )}
+                                                        <span>{comment.my_reaction ? comment.my_reaction.name : 'Like'}</span>
+                                                    </Button>
+                                                </div>
                                                 {/* Comment reactions summary */}
                                                 {comment.reactions_summary && comment.reactions_summary.length > 0 && (
                                                     <span className="flex items-center gap-0.5 ml-2">

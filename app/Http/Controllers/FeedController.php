@@ -10,6 +10,7 @@ use App\Models\Post;
 use App\Models\Comment;
 use App\Models\PostReaction;
 use App\Models\Reaction;
+use App\Models\CommentReaction;
 
 class FeedController extends Controller
 {
@@ -95,23 +96,38 @@ class FeedController extends Controller
     {
         $request->validate(['reaction_id' => 'required|exists:reactions,id']);
         $user = $request->user();
-        $post = \App\Models\Post::findOrFail($postId);
-        // Remove old reaction if exists
-        PostReaction::where('post_id', $post->id)->where('user_id', $user->id)->delete();
-        // Add new reaction
-        $reaction = PostReaction::create([
-            'post_id' => $post->id,
-            'user_id' => $user->id,
-            'reaction_id' => $request->reaction_id,
-        ]);
+        \App\Services\PostService::reactToPost($user, $postId, $request->reaction_id);
         return response()->json(['success' => true]);
     }
 
     public function unreactToPost(Request $request, $postId)
     {
         $user = $request->user();
-        $post = \App\Models\Post::findOrFail($postId);
-        PostReaction::where('post_id', $post->id)->where('user_id', $user->id)->delete();
+        \App\Services\PostService::unreactToPost($user, $postId);
+        return response()->json(['success' => true]);
+    }
+
+    public function reactToComment(Request $request, $commentId)
+    {
+        $request->validate(['reaction_id' => 'required|exists:reactions,id']);
+        $user = $request->user();
+        $comment = \App\Models\Comment::findOrFail($commentId);
+        // Remove old reaction if exists
+        CommentReaction::where('comment_id', $comment->id)->where('user_id', $user->id)->delete();
+        // Add new reaction
+        $reaction = CommentReaction::create([
+            'comment_id' => $comment->id,
+            'user_id' => $user->id,
+            'reaction_id' => $request->reaction_id,
+        ]);
+        return response()->json(['success' => true]);
+    }
+
+    public function unreactToComment(Request $request, $commentId)
+    {
+        $user = $request->user();
+        $comment = \App\Models\Comment::findOrFail($commentId);
+        CommentReaction::where('comment_id', $comment->id)->where('user_id', $user->id)->delete();
         return response()->json(['success' => true]);
     }
 }

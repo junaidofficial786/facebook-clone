@@ -161,4 +161,23 @@ class PostService
         $post->delete();
         return true;
     }
+
+    public static function reactToPost($user, $postId, $reactionId)
+    {
+        $post = Post::findOrFail($postId);
+        // Remove old reaction if exists
+        \App\Models\PostReaction::where('post_id', $post->id)->where('user_id', $user->id)->delete();
+        // Add new reaction
+        \App\Models\PostReaction::create([
+            'post_id' => $post->id,
+            'user_id' => $user->id,
+            'reaction_id' => $reactionId,
+        ]);
+    }
+
+    public static function unreactToPost($user, $postId)
+    {
+        $post = Post::findOrFail($postId);
+        \App\Models\PostReaction::where('post_id', $post->id)->where('user_id', $user->id)->delete();
+    }
 }
