@@ -1,31 +1,27 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Users, Bookmark, Users2, Video, List } from 'lucide-react';
 
-const groups = [
-    { id: 1, name: 'React Developers', image: 'https://randomuser.me/api/portraits/men/32.jpg' },
-    { id: 2, name: 'UI/UX Designers', image: 'https://randomuser.me/api/portraits/women/44.jpg' },
-    { id: 3, name: 'Laravel Pakistan', image: 'https://randomuser.me/api/portraits/men/45.jpg' },
-    { id: 4, name: 'Freelancers', image: 'https://randomuser.me/api/portraits/women/65.jpg' },
-    { id: 5, name: 'Remote Jobs', image: 'https://randomuser.me/api/portraits/men/12.jpg' },
+const menuItems = [
+    { label: 'Friends', icon: Users },
+    { label: 'Saved', icon: Bookmark },
+    { label: 'Groups', icon: Users2 },
+    { label: 'Videos', icon: Video },
+    { label: 'Feed', icon: List },
 ];
 
 export default function LeftColumn() {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Groups</CardTitle>
+                <CardTitle>Menu</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col gap-4">
-                {groups.map(group => (
-                    <div key={group.id} className="flex items-center gap-3">
-                        <Avatar>
-                            <AvatarImage src={group.image} alt={group.name} />
-                            <AvatarFallback>{group.name[0]}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 font-medium truncate">{group.name}</div>
-                        <Button size="sm" variant="secondary">Join</Button>
-                    </div>
+            <CardContent className="flex flex-col gap-2">
+                {menuItems.map((item) => (
+                    <Button key={item.label} variant="ghost" className="justify-start gap-3 text-base font-normal">
+                        <item.icon className="w-5 h-5" />
+                        {item.label}
+                    </Button>
                 ))}
             </CardContent>
         </Card>
