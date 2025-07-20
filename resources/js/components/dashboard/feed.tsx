@@ -636,7 +636,7 @@ export default function Feed() {
                                 </div>
                             )}
                             {/* Comments and comment input */}
-                            <div className="mt-2 flex flex-col gap-3">
+                            <div className="mt-2 flex flex-col gap-3 w-full">
                                 {post.comments && post.comments.length > 0 && post.comments.map((comment: any) => (
                                     <div key={comment.id} className="flex items-start gap-2">
                                         <Avatar className="h-7 w-7">
@@ -737,7 +737,7 @@ export default function Feed() {
                                         </div>
                                     </div>
                                 ))}
-                                <Input placeholder="Write a comment..." />
+                                <Input className="w-full" placeholder="Write a comment..." />
                             </div>
                         </CardFooter>
                     </Card>
