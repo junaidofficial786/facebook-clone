@@ -10,33 +10,40 @@ class PostService
 {
     const MEDIA_DISK = 'public';
 
-    public static function fetchFeedPosts($perPage = 10, $page = null)
+    public static function fetchFeedPosts($perPage = 10, $page = null, $userId = null, $groupId = null)
     {
-        $userId = Auth::id();
+        $authUserId = Auth::id();
         $query = Post::with([
             'user:id,name,profile_pic',
             'postMedia:id,post_id,media_type,media_url',
             'comments.user:id,name,profile_pic',
             'comments.commentReactions',
             'comments.myCommentReaction',
-            'postReactions' => function ($q) use ($userId) {
-                $q->where('user_id', $userId);
+            'postReactions' => function ($q) use ($authUserId) {
+                $q->where('user_id', $authUserId);
             },
         ])
         ->withCount('postReactions as reactions_count')
         ->orderByDesc('id');
 
+        if ($userId) {
+            $query->where('user_id', $userId);
+        }
+        if ($groupId) {
+            $query->where('group_id', $groupId);
+        }
+
         $paginator = $query->paginate($perPage, ['*'], 'page', $page);
-        $paginator->getCollection()->transform(function ($post) use ($userId) {
+        $paginator->getCollection()->transform(function ($post) use ($authUserId) {
             $post->created_at_human = $post->created_at->diffForHumans();
             $post->media = $post->postMedia;
-            $post->liked_by_me = $userId ? $post->postReactions->isNotEmpty() : false;
+            $post->liked_by_me = $authUserId ? $post->postReactions->isNotEmpty() : false;
             $myReaction = $post->postReactions->first();
             $post->my_reaction = $myReaction && $myReaction->reaction ? [
                 'name' => $myReaction->reaction->name,
                 'icon' => $myReaction->reaction->icon,
             ] : null;
-            $post->comments = $post->comments->map(function ($comment) use ($userId) {
+            $post->comments = $post->comments->map(function ($comment) use ($authUserId) {
                 $comment->likes_count = $comment->commentReactions->count();
                 $comment->created_at_human = $comment->created_at->diffForHumans();
                 $comment->liked_by_me = $comment->myCommentReaction !== null;
@@ -87,9 +94,9 @@ class PostService
         return $paginator;
     }
 
-    public static function getFeedPosts($perPage = 10, $page = null)
+    public static function getFeedPosts($perPage = 10, $page = null, $userId = null, $groupId = null)
     {
-        return self::fetchFeedPosts($perPage, $page);
+        return self::fetchFeedPosts($perPage, $page, $userId, $groupId);
     }
 
     /**

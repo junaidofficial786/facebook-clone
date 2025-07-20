@@ -160,7 +160,7 @@ function CommentTree({ comments, postId, ...props }: { comments: any[], postId: 
     ));
 }
 
-export default function Feed() {
+export default function Feed({ user_id, groupId }: { user_id?: number, groupId?: number }) {
     const [editorValue, setEditorValue] = useState('');
     const [media, setMedia] = useState<File | null>(null);
     const { auth } = usePage().props as any;
@@ -255,7 +255,11 @@ export default function Feed() {
     const fetchPosts = async () => {
         setLoading(true);
         try {
-            const res = await axios.get('/api/posts');
+            const urlParams = [];
+            if (user_id) urlParams.push(`user_id=${user_id}`);
+            if (groupId) urlParams.push(`group_id=${groupId}`);
+            const url = urlParams.length ? `/api/posts?${urlParams.join('&')}` : '/api/posts';
+            const res = await axios.get(url);
             setPosts(res.data.data || []);
             setHasMore(res.data.next_page_url !== null);
             setPage(1);
@@ -304,7 +308,11 @@ export default function Feed() {
         inFlightPages.current.add(nextPage);
         setLoading(true);
         try {
-            const res = await axios.get(`/api/posts?page=${nextPage}`);
+            const urlParams = [`page=${nextPage}`];
+            if (user_id) urlParams.push(`user_id=${user_id}`);
+            if (groupId) urlParams.push(`group_id=${groupId}`);
+            const url = `/api/posts?${urlParams.join('&')}`;
+            const res = await axios.get(url);
             setPosts((prev: any[] | null) => prev ? [...prev, ...res.data.data] : res.data.data);
             setHasMore(res.data.next_page_url !== null);
             setPage(nextPage);
@@ -314,7 +322,7 @@ export default function Feed() {
         }
         setLoading(false);
         inFlightPages.current.delete(nextPage);
-    }, []);
+    }, [user_id, groupId]);
 
     const handleDelete = async (postId: number) => {
         setDeleting(true);

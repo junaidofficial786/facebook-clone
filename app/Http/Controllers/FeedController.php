@@ -28,7 +28,9 @@ class FeedController extends Controller
     {
         $perPage = self::PER_PAGE_POSTS;
         $page = $request->input('page', null);
-        $posts = PostService::getFeedPosts($perPage, $page);
+        $userId = $request->input('user_id', null);
+        $groupId = $request->input('group_id', null);
+        $posts = PostService::getFeedPosts($perPage, $page, $userId, $groupId);
         return response()->json($posts);
     }
 
