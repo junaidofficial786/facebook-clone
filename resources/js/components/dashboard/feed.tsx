@@ -163,12 +163,12 @@ function CommentTree({ comments, postId, ...props }: { comments: any[], postId: 
 export default function Feed() {
     const [editorValue, setEditorValue] = useState('');
     const [media, setMedia] = useState<File | null>(null);
-    const { posts: initialPosts, auth } = usePage().props as any;
+    const { auth } = usePage().props as any;
     const currentUserId = auth?.user?.id;
-    const [posts, setPosts] = useState(initialPosts?.data || []);
+    const [posts, setPosts] = useState<any[] | null>(null); // null means loading
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true); // true initially
     const [replyingTo, setReplyingTo] = useState<number | null>(null);
     const [deleting, setDeleting] = useState(false);
     const [deleteId, setDeleteId] = useState<number | null>(null);
@@ -205,12 +205,12 @@ export default function Feed() {
         if (!content) return;
         try {
             const res = await axios.post(`/api/posts/${postId}/comments`, { content });
-            setPosts((posts: any[]) =>
-                posts.map((post: any) =>
+            setPosts((posts: any[] | null) =>
+                posts ? posts.map((post: any) =>
                     post.id === postId
                         ? { ...post, comments: [...(post.comments || []), res.data.comment] }
                         : post
-                )
+                ) : posts
             );
             setCommentInputs(inputs => ({ ...inputs, [postId]: '' }));
         } catch (e) {
@@ -230,12 +230,12 @@ export default function Feed() {
         if (!content) return;
         try {
             const res = await axios.post(`/api/posts/${postId}/comments`, { content, parent_id: parentCommentId });
-            setPosts((posts: any[]) =>
-                posts.map((post: any) =>
+            setPosts((posts: any[] | null) =>
+                posts ? posts.map((post: any) =>
                     post.id === postId
                         ? { ...post, comments: [...(post.comments || []), res.data.comment] }
                         : post
-                )
+                ) : posts
             );
             setReplyInputs(inputs => ({ ...inputs, [parentCommentId]: '' }));
         } catch (e) {
@@ -253,14 +253,16 @@ export default function Feed() {
     const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
 
     const fetchPosts = async () => {
+        setLoading(true);
         try {
             const res = await axios.get('/api/posts');
             setPosts(res.data.data || []);
             setHasMore(res.data.next_page_url !== null);
             setPage(1);
         } catch (e) {
-            // Optionally handle error
+            setPosts([]); // fallback to empty
         }
+        setLoading(false);
     };
 
     useEffect(() => {
@@ -303,7 +305,7 @@ export default function Feed() {
         setLoading(true);
         try {
             const res = await axios.get(`/api/posts?page=${nextPage}`);
-            setPosts((prev: any[]) => [...prev, ...res.data.data]);
+            setPosts((prev: any[] | null) => prev ? [...prev, ...res.data.data] : res.data.data);
             setHasMore(res.data.next_page_url !== null);
             setPage(nextPage);
             pageRef.current = nextPage;
@@ -319,7 +321,7 @@ export default function Feed() {
         setDeleteId(postId);
         try {
             await axios.delete(`/posts/${postId}`);
-            setPosts((prev: any[]) => prev.filter((p) => p.id !== postId));
+            setPosts((prev: any[] | null) => prev ? prev.filter((p) => p.id !== postId) : prev);
             setToastMessage('Post successfully deleted');
             setShowToast(true);
         } catch (e) {
@@ -436,7 +438,33 @@ export default function Feed() {
             <div ref={feedContainerRef} className="flex flex-col gap-6 h-full min-h-0 max-h-screen overflow-y-auto feed-scroll">
                 <CreatePost onPostCreated={fetchPosts} />
 
-                {posts && posts.length > 0 ? posts.map((post: any) => (
+                {/* Skeleton Placeholder */}
+                {posts === null ? (
+                    <Card className="animate-pulse">
+                        <CardHeader className="flex flex-row items-center gap-3 justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="bg-gray-300 rounded-full h-10 w-10" />
+                                <div>
+                                    <div className="bg-gray-300 h-4 w-32 rounded mb-2" />
+                                    <div className="bg-gray-200 h-3 w-20 rounded" />
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="bg-gray-200 h-4 w-full rounded mb-2" />
+                            <div className="bg-gray-200 h-4 w-3/4 rounded mb-2" />
+                            <div className="bg-gray-200 h-4 w-1/2 rounded" />
+                            <div className="bg-gray-200 h-48 w-full rounded-lg mt-4" />
+                        </CardContent>
+                        <CardFooter className="flex flex-col gap-2">
+                            <div className="flex gap-4 items-center mb-1">
+                                <div className="bg-gray-200 h-8 w-20 rounded-full" />
+                                <div className="bg-gray-200 h-6 w-12 rounded-full" />
+                            </div>
+                            <div className="bg-gray-200 h-8 w-full rounded mb-2" />
+                        </CardFooter>
+                    </Card>
+                ) : posts && posts.length > 0 ? posts.map((post: any) => (
                     <Card key={post.id}>
                         <CardHeader className="flex flex-row items-center gap-3 justify-between">
                             <div className="flex items-center gap-3">
