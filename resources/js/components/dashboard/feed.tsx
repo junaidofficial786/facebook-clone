@@ -149,11 +149,15 @@ export default function Feed() {
         setReactionUsers([]);
     };
 
-    const handleReact = async (postId: number, reactionId: number) => {
+    const handleReact = async (postId: number, reactionId: number, currentReactionId?: number) => {
       setReactingPostId(postId);
       try {
-        await axios.post(`/api/posts/${postId}/react`, { reaction_id: reactionId });
-        await fetchPosts();
+        if (currentReactionId === reactionId) {
+          await handleUnreact(postId);
+        } else {
+          await axios.post(`/api/posts/${postId}/react`, { reaction_id: reactionId });
+          await fetchPosts();
+        }
       } finally {
         setReactingPostId(null);
       }
@@ -528,9 +532,9 @@ export default function Feed() {
                                             {reactions.map(r => (
                                                 <button
                                                     key={r.id}
-                                                    className="text-xl hover:scale-125 transition-transform duration-100"
+                                                    className={`text-xl hover:scale-125 transition-transform duration-100${post.my_reaction && post.my_reaction.name === r.name ? ' ring-2 ring-blue-400' : ''}`}
                                                     title={r.name}
-                                                    onClick={() => handleReact(post.id, r.id)}
+                                                    onClick={() => handleReact(post.id, r.id, post.my_reaction?.name === r.name ? r.id : undefined)}
                                                     type="button"
                                                     disabled={reactingPostId === post.id}
                                                 >
