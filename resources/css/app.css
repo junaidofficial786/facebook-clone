@@ -166,3 +166,32 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
 }
+
+/* Custom dark scrollbar for feed posts area */
+.feed-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #222 #e0e0e0;
+}
+.feed-scroll::-webkit-scrollbar {
+  width: 8px;
+  background: #e0e0e0;
+}
+.feed-scroll::-webkit-scrollbar-thumb {
+  background: #222;
+  border-radius: 6px;
+}
+.feed-scroll::-webkit-scrollbar-thumb:hover {
+  background: #444;
+}
+.dark .feed-scroll {
+  scrollbar-color: #444 #18181b;
+}
+.dark .feed-scroll::-webkit-scrollbar {
+  background: #18181b;
+}
+.dark .feed-scroll::-webkit-scrollbar-thumb {
+  background: #444;
+}
+.dark .feed-scroll::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
