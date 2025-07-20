@@ -23,6 +23,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/api/posts/{post}/react', [App\Http\Controllers\FeedController::class, 'unreactToPost']);
     Route::post('/api/comments/{comment}/react', [App\Http\Controllers\FeedController::class, 'reactToComment']);
     Route::delete('/api/comments/{comment}/react', [App\Http\Controllers\FeedController::class, 'unreactToComment']);
+    Route::post('/api/posts/{post}/comments', [\App\Http\Controllers\CommentController::class, 'store'])->middleware('auth');
 });
 
 //an revern event that throws event for testing

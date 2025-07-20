@@ -42,6 +42,34 @@ export default function Feed() {
     const [hoveredCommentId, setHoveredCommentId] = useState<number | null>(null);
     const commentHoverTimeout = useRef<NodeJS.Timeout | null>(null);
 
+    // Add state for comment input per post
+    const [commentInputs, setCommentInputs] = useState<{ [postId: number]: string }>({});
+
+    // Handle input change
+    const handleCommentInputChange = (postId: number, value: string) => {
+        setCommentInputs(inputs => ({ ...inputs, [postId]: value }));
+    };
+
+    // Handle comment submit
+    const handleCommentSubmit = async (postId: number) => {
+        const content = commentInputs[postId]?.trim();
+        if (!content) return;
+        try {
+            const res = await axios.post(`/api/posts/${postId}/comments`, { content });
+            setPosts((posts: any[]) =>
+                posts.map((post: any) =>
+                    post.id === postId
+                        ? { ...post, comments: [...(post.comments || []), res.data.comment] }
+                        : post
+                )
+            );
+            setCommentInputs(inputs => ({ ...inputs, [postId]: '' }));
+        } catch (e) {
+            setToastMessage('Unable to add comment.');
+            setShowToast(true);
+        }
+    };
+
     const loadingRef = useRef(loading);
     const hasMoreRef = useRef(hasMore);
     const pageRef = useRef(page);
@@ -737,7 +765,32 @@ export default function Feed() {
                                         </div>
                                     </div>
                                 ))}
-                                <Input className="w-full" placeholder="Write a comment..." />
+                                <div className="flex gap-2 mt-2">
+                                    <Input
+                                        className="w-full"
+                                        placeholder="Write a comment..."
+                                        value={commentInputs[post.id] || ''}
+                                        maxLength={100}
+                                        onChange={e => handleCommentInputChange(post.id, e.target.value)}
+                                        onKeyDown={e => {
+                                            if (e.key === 'Enter' && !e.shiftKey) {
+                                                e.preventDefault();
+                                                handleCommentSubmit(post.id);
+                                            }
+                                        }}
+                                    />
+                                    <Button
+                                        variant="default"
+                                        onClick={() => handleCommentSubmit(post.id)}
+                                        disabled={!(commentInputs[post.id] && commentInputs[post.id].trim())}
+                                        className="h-9"
+                                    >
+                                        Comment
+                                    </Button>
+                                </div>
+                                <div className="text-xs text-muted-foreground mt-1 text-right">
+                                    {(commentInputs[post.id]?.length || 0)}/100
+                                </div>
                             </div>
                         </CardFooter>
                     </Card>

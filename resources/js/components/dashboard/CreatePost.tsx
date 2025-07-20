@@ -80,7 +80,9 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
                         rows={4}
                         name="content"
                         className="w-full rounded-md border border-input bg-gray-50 p-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-200 resize-none mb-2 shadow-sm"
+                        maxLength={200}
                     />
+                    <div className="text-xs text-muted-foreground mb-2 text-right">{editorValue.length}/200</div>
                     {media.length > 0 && (
                         <div className="mb-2 flex gap-2 flex-wrap">
                             {media.map((file, idx) =>

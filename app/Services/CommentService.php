@@ -36,4 +36,14 @@ class CommentService
             ->filter()
             ->values();
     }
+
+    public static function storeComment($user, $post, $content)
+    {
+        $comment = Comment::create([
+            'user_id' => $user->id,
+            'post_id' => $post->id,
+            'content' => $content,
+        ]);
+        return $comment;
+    }
 }
