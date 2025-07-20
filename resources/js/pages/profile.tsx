@@ -244,8 +244,8 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
                         )}
                     </>
                 )}
-                {/* Profile Pic */}
-                <div className="absolute left-8 -bottom-16 flex items-end">
+                {/* Profile Pic and Name */}
+                <div className="absolute left-8 -bottom-16 flex items-center">
                     <div className="relative">
                         <img src={profilePreview || user.profilePic} alt="Profile" className="w-36 h-36 rounded-full border-4 border-white shadow-lg object-cover bg-white" />
                         {isOwnProfile && (
@@ -269,12 +269,16 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
                             </>
                         )}
                     </div>
+                    <div className="ml-6">
+                        <div className="text-2xl mt-14 font-bold text-gray-900">{user.name}</div>
+                    </div>
                 </div>
             </div>
             {/* Name, Bio, Edit Bio */}
             <div className="pt-20 pb-4 px-8 flex flex-col md:flex-row md:items-center md:justify-between border-b">
                 <div>
-                    <div className="text-2xl font-bold text-gray-900">{user.name}</div>
+                    {/* Name removed from here, only bio and edit bio remain */}
+                    {/* <div className="text-2xl font-bold text-gray-900">{user.name}</div> */}
                     <div className="flex items-center gap-2 mt-2 text-gray-700">
                         {editingBio ? (
                             <>
