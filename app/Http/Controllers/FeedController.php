@@ -65,25 +65,13 @@ class FeedController extends Controller
 
     public function reactionUsers(Post $post, $reactionId)
     {
-        $users = $post->postReactions()
-            ->where('reaction_id', $reactionId)
-            ->with('user:id,name,profile_pic')
-            ->get()
-            ->pluck('user')
-            ->filter()
-            ->values();
+        $users = \App\Services\PostService::reactionUsers($post, $reactionId);
         return response()->json(['users' => $users]);
     }
 
     public function commentReactionUsers(Comment $comment, $reactionId)
     {
-        $users = $comment->commentReactions()
-            ->where('reaction_id', $reactionId)
-            ->with('user:id,name,profile_pic')
-            ->get()
-            ->pluck('user')
-            ->filter()
-            ->values();
+        $users = \App\Services\CommentService::commentReactionUsers($comment, $reactionId);
         return response()->json(['users' => $users]);
     }
 
@@ -111,23 +99,14 @@ class FeedController extends Controller
     {
         $request->validate(['reaction_id' => 'required|exists:reactions,id']);
         $user = $request->user();
-        $comment = \App\Models\Comment::findOrFail($commentId);
-        // Remove old reaction if exists
-        CommentReaction::where('comment_id', $comment->id)->where('user_id', $user->id)->delete();
-        // Add new reaction
-        $reaction = CommentReaction::create([
-            'comment_id' => $comment->id,
-            'user_id' => $user->id,
-            'reaction_id' => $request->reaction_id,
-        ]);
+        \App\Services\CommentService::reactToComment($user, $commentId, $request->reaction_id);
         return response()->json(['success' => true]);
     }
 
     public function unreactToComment(Request $request, $commentId)
     {
         $user = $request->user();
-        $comment = \App\Models\Comment::findOrFail($commentId);
-        CommentReaction::where('comment_id', $comment->id)->where('user_id', $user->id)->delete();
+        \App\Services\CommentService::unreactToComment($user, $commentId);
         return response()->json(['success' => true]);
     }
 }

@@ -591,11 +591,17 @@ export default function Feed() {
                                         {loadingReactionUsers ? (
                                             <div className="py-4 text-center">Loading...</div>
                                         ) : reactionUsers.length > 0 ? (
-                                            <ul className="py-2">
+                                            <ul className="py-2 px-2 space-y-2">
                                                 {reactionUsers.map((user: any) => (
-                                                    <li key={user.id} className="py-1 flex items-center gap-2">
-                                                        <Avatar className="h-6 w-6"><AvatarImage src={user.profile_pic} alt={user.name} /><AvatarFallback>{user.name?.[0]}</AvatarFallback></Avatar>
-                                                        <span>{user.name}</span>
+                                                    <li
+                                                        key={user.id}
+                                                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                                    >
+                                                        <Avatar className="h-8 w-8 rounded-full ring-1 ring-gray-200 dark:ring-gray-700">
+                                                            <AvatarImage src={user.profile_pic} alt={user.name} />
+                                                            <AvatarFallback>{user.name?.[0]}</AvatarFallback>
+                                                        </Avatar>
+                                                        <span className="font-medium text-gray-900 dark:text-gray-100">{user.name}</span>
                                                     </li>
                                                 ))}
                                             </ul>

@@ -180,4 +180,15 @@ class PostService
         $post = Post::findOrFail($postId);
         \App\Models\PostReaction::where('post_id', $post->id)->where('user_id', $user->id)->delete();
     }
+
+    public static function reactionUsers($post, $reactionId)
+    {
+        return $post->postReactions()
+            ->where('reaction_id', $reactionId)
+            ->with('user:id,name,profile_pic')
+            ->get()
+            ->pluck('user')
+            ->filter()
+            ->values();
+    }
 }
