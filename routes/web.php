@@ -18,6 +18,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('posts/{post}/reactions/{reaction}', [FeedController::class, 'reactionUsers']);
     Route::get('comments/{comment}/reactions/{reaction}', [FeedController::class, 'commentReactionUsers']);
     Route::post('posts', [FeedController::class, 'store'])->name('posts.store');
+    Route::get('/api/reactions', [App\Http\Controllers\FeedController::class, 'allReactions']);
+    Route::post('/api/posts/{post}/react', [App\Http\Controllers\FeedController::class, 'reactToPost']);
+    Route::delete('/api/posts/{post}/react', [App\Http\Controllers\FeedController::class, 'unreactToPost']);
 });
 
 //an revern event that throws event for testing

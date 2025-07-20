@@ -35,6 +35,8 @@ export default function Feed() {
     const [openMediaDialog, setOpenMediaDialog] = useState<{ postId: number } | null>(null);
     const [expandedPostIds, setExpandedPostIds] = useState<number[]>([]);
     const [viewMedia, setViewMedia] = useState<{ url: string, type: 'image' | 'video' } | null>(null);
+    const [reactions, setReactions] = useState<{id:number, name:string, icon:string}[]>([]);
+    const [reactingPostId, setReactingPostId] = useState<number|null>(null);
 
     const loadingRef = useRef(loading);
     const hasMoreRef = useRef(hasMore);
@@ -63,6 +65,10 @@ export default function Feed() {
         hasMoreRef.current = hasMore;
         pageRef.current = page;
     }, [loading, hasMore, page]);
+
+    useEffect(() => {
+        axios.get('/api/reactions').then(res => setReactions(res.data));
+    }, []);
 
     const insertTag = (tag: string, closeTag?: string) => {
         const textarea = textareaRef.current;
@@ -139,6 +145,26 @@ export default function Feed() {
     const closeReactionDialog = () => {
         setOpenReactionDialog(null);
         setReactionUsers([]);
+    };
+
+    const handleReact = async (postId: number, reactionId: number) => {
+      setReactingPostId(postId);
+      try {
+        await axios.post(`/api/posts/${postId}/react`, { reaction_id: reactionId });
+        await fetchPosts();
+      } finally {
+        setReactingPostId(null);
+      }
+    };
+
+    const handleUnreact = async (postId: number) => {
+      setReactingPostId(postId);
+      try {
+        await axios.delete(`/api/posts/${postId}/react`);
+        await fetchPosts();
+      } finally {
+        setReactingPostId(null);
+      }
     };
 
     // Scroll listener on feed container
@@ -480,19 +506,36 @@ export default function Feed() {
                         </CardContent>
                         <CardFooter className="flex flex-col gap-2">
                             <div className="flex gap-4 items-center mb-1">
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className={`flex items-center gap-1 cursor-pointer ${post.liked_by_me ? 'text-blue-600' : ''}`}
-                                    onClick={() => {/* like logic yahan */}}
-                                >
-                                    {post.my_reaction && post.my_reaction.icon ? (
-                                        <span className="text-xl">{post.my_reaction.icon}</span>
-                                    ) : (
-                                        <ThumbsUp className={`h-4 w-4 ${post.liked_by_me ? 'text-blue-600' : 'text-gray-700'}`} />
-                                    )}
-                                    <span>{post.my_reaction ? post.my_reaction.name : 'Like'}</span>
-                                </Button>
+                                <div className="relative group w-fit">
+                                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-10 hidden group-hover:flex gap-2 bg-white dark:bg-gray-800 rounded-full shadow px-3 py-1 border border-gray-200 dark:border-gray-700 transition-all">
+                                        {reactions.map(r => (
+                                            <button
+                                                key={r.id}
+                                                className="text-xl hover:scale-125 transition-transform duration-100"
+                                                title={r.name}
+                                                onClick={() => handleReact(post.id, r.id)}
+                                                type="button"
+                                                disabled={reactingPostId === post.id}
+                                            >
+                                                {r.icon}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className={`flex items-center gap-1 cursor-pointer ${post.liked_by_me ? 'text-blue-600' : ''}`}
+                                        onClick={() => post.liked_by_me ? handleUnreact(post.id) : handleReact(post.id, reactions.find(r => r.name === 'Like')?.id || reactions[0]?.id)}
+                                        disabled={reactingPostId === post.id}
+                                    >
+                                        {post.my_reaction && post.my_reaction.icon ? (
+                                            <span className="text-xl">{post.my_reaction.icon}</span>
+                                        ) : (
+                                            <ThumbsUp className={`h-4 w-4 ${post.liked_by_me ? 'text-blue-600' : 'text-gray-700'}`} />
+                                        )}
+                                        <span>{post.my_reaction ? post.my_reaction.name : 'Like'}</span>
+                                    </Button>
+                                </div>
                                 {/* Reaction Users Dialog */}
                                 {openReactionDialog && openReactionDialog.postId === post.id && (
                                     <CustomDialog open={true} onClose={closeReactionDialog} title="Users who reacted">
@@ -537,90 +580,87 @@ export default function Feed() {
                                     </span>
                                 </div>
                             )}
-
-                            {post.comments && post.comments.length > 0 && (
-                                <div className="mt-2 flex flex-col gap-3">
-                                    {post.comments.map((comment: any) => (
-                                        <div key={comment.id} className="flex items-start gap-2">
-                                            <Avatar className="h-7 w-7">
-                                                <AvatarImage src={comment.user?.profile_pic} alt={comment.user?.name} />
-                                                <AvatarFallback>{comment.user?.name?.[0]}</AvatarFallback>
-                                            </Avatar>
-                                            <div className="bg-gray-100 rounded-lg px-3 py-2 flex-1">
-                                                <div className="font-medium text-sm flex items-center gap-2">
-                                                    <Link href={`/settings/profile/${comment.user?.id}`} className="text-black font-medium hover:underline">{comment.user?.name}</Link>
-                                                    <span className="text-xs text-muted-foreground font-normal">{comment.created_at_human}</span>
-                                                </div>
-                                                <div className="text-sm text-gray-700 whitespace-pre-line">{comment.content}</div>
-                                                <div className="flex gap-3 mt-1 items-center">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className={`px-2 py-0.5 text-xs h-7 cursor-pointer ${comment.liked_by_me ? 'text-blue-600' : ''}`}
-                                                        onClick={() => alert('Like functionality coming soon!')}
-                                                    >
-                                                        {comment.my_reaction && comment.my_reaction.icon ? (
-                                                            <span className="text-lg">{comment.my_reaction.icon}</span>
-                                                        ) : (
-                                                            <ThumbsUp className={`h-3.5 w-3.5 mr-1 ${comment.liked_by_me ? 'text-blue-600' : 'text-gray-700'}`} />
-                                                        )}
-                                                        <span>{comment.my_reaction ? comment.my_reaction.name : 'Like'}</span>
-                                                    </Button>
-                                                    {/* Comment reactions summary */}
-                                                    {comment.reactions_summary && comment.reactions_summary.length > 0 && (
-                                                        <span className="flex items-center gap-0.5 ml-2">
-                                                            {comment.reactions_summary.map((r: any) => (
-                                                                <span
-                                                                    key={r.reaction_id}
-                                                                    title={r.name}
-                                                                    className="text-lg cursor-pointer px-1 rounded hover:bg-gray-200"
-                                                                    onClick={e => { e.stopPropagation(); handleEmojiClick(undefined, r.reaction_id, comment.id); }}
-                                                                >
-                                                                    {r.icon} <span className="text-xs align-middle">{r.count}</span>
-                                                                </span>
-                                                            ))}
-                                                        </span>
-                                                    )}
-                                                    {/* Comment Reaction Users Dialog */}
-                                                    {openReactionDialog && openReactionDialog.commentId === comment.id && (
-                                                        <CustomDialog open={true} onClose={closeReactionDialog} title="Users who reacted">
-                                                            {loadingReactionUsers ? (
-                                                                <div className="py-4 text-center">Loading...</div>
-                                                            ) : reactionUsers.length > 0 ? (
-                                                                <ul className="py-2">
-                                                                    {reactionUsers.map((user: any) => (
-                                                                        <li key={user.id} className="py-1 flex items-center gap-2">
-                                                                            <Avatar className="h-6 w-6"><AvatarImage src={user.profile_pic} alt={user.name} /><AvatarFallback>{user.name?.[0]}</AvatarFallback></Avatar>
-                                                                            <span>{user.name}</span>
-                                                                        </li>
-                                                                    ))}
-                                                                </ul>
-                                                            ) : (
-                                                                <div className="py-4 text-center text-muted-foreground">No users found.</div>
-                                                            )}
-                                                        </CustomDialog>
-                                                    )}
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="px-2 py-0.5 text-xs h-7 cursor-pointer"
-                                                        onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
-                                                    >
-                                                        Reply
-                                                    </Button>
-                                                </div>
-                                                {replyingTo === comment.id && (
-                                                    <div className="mt-2">
-                                                        <Input placeholder={`Reply to ${comment.user?.name}...`} className="h-8 text-sm" autoFocus />
-                                                    </div>
-                                                )}
+                            {/* Comments and comment input */}
+                            <div className="mt-2 flex flex-col gap-3">
+                                {post.comments && post.comments.length > 0 && post.comments.map((comment: any) => (
+                                    <div key={comment.id} className="flex items-start gap-2">
+                                        <Avatar className="h-7 w-7">
+                                            <AvatarImage src={comment.user?.profile_pic} alt={comment.user?.name} />
+                                            <AvatarFallback>{comment.user?.name?.[0]}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="bg-gray-100 rounded-lg px-3 py-2 flex-1">
+                                            <div className="font-medium text-sm flex items-center gap-2">
+                                                <Link href={`/settings/profile/${comment.user?.id}`} className="text-black font-medium hover:underline">{comment.user?.name}</Link>
+                                                <span className="text-xs text-muted-foreground font-normal">{comment.created_at_human}</span>
                                             </div>
+                                            <div className="text-sm text-gray-700 whitespace-pre-line">{comment.content}</div>
+                                            <div className="flex gap-3 mt-1 items-center">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className={`px-2 py-0.5 text-xs h-7 cursor-pointer ${comment.liked_by_me ? 'text-blue-600' : ''}`}
+                                                    onClick={() => alert('Like functionality coming soon!')}
+                                                >
+                                                    {comment.my_reaction && comment.my_reaction.icon ? (
+                                                        <span className="text-lg">{comment.my_reaction.icon}</span>
+                                                    ) : (
+                                                        <ThumbsUp className={`h-3.5 w-3.5 mr-1 ${comment.liked_by_me ? 'text-blue-600' : 'text-gray-700'}`} />
+                                                    )}
+                                                    <span>{comment.my_reaction ? comment.my_reaction.name : 'Like'}</span>
+                                                </Button>
+                                                {/* Comment reactions summary */}
+                                                {comment.reactions_summary && comment.reactions_summary.length > 0 && (
+                                                    <span className="flex items-center gap-0.5 ml-2">
+                                                        {comment.reactions_summary.map((r: any) => (
+                                                            <span
+                                                                key={r.reaction_id}
+                                                                title={r.name}
+                                                                className="text-lg cursor-pointer px-1 rounded hover:bg-gray-200"
+                                                                onClick={e => { e.stopPropagation(); handleEmojiClick(undefined, r.reaction_id, comment.id); }}
+                                                            >
+                                                                {r.icon} <span className="text-xs align-middle">{r.count}</span>
+                                                            </span>
+                                                        ))}
+                                                    </span>
+                                                )}
+                                                {/* Comment Reaction Users Dialog */}
+                                                {openReactionDialog && openReactionDialog.commentId === comment.id && (
+                                                    <CustomDialog open={true} onClose={closeReactionDialog} title="Users who reacted">
+                                                        {loadingReactionUsers ? (
+                                                            <div className="py-4 text-center">Loading...</div>
+                                                        ) : reactionUsers.length > 0 ? (
+                                                            <ul className="py-2">
+                                                                {reactionUsers.map((user: any) => (
+                                                                    <li key={user.id} className="py-1 flex items-center gap-2">
+                                                                        <Avatar className="h-6 w-6"><AvatarImage src={user.profile_pic} alt={user.name} /><AvatarFallback>{user.name?.[0]}</AvatarFallback></Avatar>
+                                                                        <span>{user.name}</span>
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        ) : (
+                                                            <div className="py-4 text-center text-muted-foreground">No users found.</div>
+                                                        )}
+                                                    </CustomDialog>
+                                                )}
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="px-2 py-0.5 text-xs h-7 cursor-pointer"
+                                                    onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+                                                >
+                                                    Reply
+                                                </Button>
+                                            </div>
+                                            {replyingTo === comment.id && (
+                                                <div className="mt-2">
+                                                    <Input placeholder={`Reply to ${comment.user?.name}...`} className="h-8 text-sm" autoFocus />
+                                                </div>
+                                            )}
                                         </div>
-                                    ))}
-                                </div>
-                            )}
-
-                            <Input placeholder="Write a comment..." />
+                                    </div>
+                                ))}
+                                <Input placeholder="Write a comment..." />
+                            </div>
                         </CardFooter>
                     </Card>
                 )) : <div>No posts found.</div>}
