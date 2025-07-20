@@ -3,6 +3,9 @@ import { Pencil, Camera, Users, Info, List, UserCircle2, Upload, X, Check } from
 import { useToast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
 import LoaderOverlay from '@/components/ui/loader';
+import Feed from '@/components/dashboard/feed';
+import { usePage } from '@inertiajs/react';
+import { useParams } from 'react-router-dom';
 
 interface ProfilePageProps {
     user: {
@@ -46,6 +49,19 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
     const [loadingInfo, setLoadingInfo] = useState(false);
 
     const { show: showToast } = useToast();
+
+    let urlUserId: number | undefined = undefined;
+    if (typeof window !== 'undefined') {
+      const pathParts = window.location.pathname.split('/');
+      // Try to get the last segment if it's a number
+      const lastPart = pathParts[pathParts.length - 1];
+      const parsed = parseInt(lastPart, 10);
+      if (!isNaN(parsed)) urlUserId = parsed;
+    }
+    const authUserId = usePage().props.auth?.user?.id;
+    const userIdToShow = urlUserId !== undefined ? urlUserId : authUserId;
+
+    const showCreatePost = userIdToShow === authUserId;
 
     // Handlers for profile image
     const handleProfileEdit = () => profileInputRef.current?.click();
@@ -297,13 +313,8 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
             {/* Tab Content */}
             <div className="px-8 py-6 min-h-[300px] bg-gray-50">
                 {tab === 'posts' && (
-                    <div className="space-y-4">
-                        {user.posts.map(post => (
-                            <div key={post.id} className="bg-white rounded-lg shadow p-4 border">
-                                <div className="text-gray-800">{post.content}</div>
-                                <div className="text-xs text-gray-500 mt-2">{post.created_at}</div>
-                            </div>
-                        ))}
+                    <div className="h-[600px] overflow-y-auto">
+                        <Feed user_id={userIdToShow} showCreatePost={showCreatePost} />
                     </div>
                 )}
                 {tab === 'friends' && (

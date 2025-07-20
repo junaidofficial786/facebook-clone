@@ -160,7 +160,10 @@ function CommentTree({ comments, postId, ...props }: { comments: any[], postId: 
     ));
 }
 
-export default function Feed({ user_id, groupId }: { user_id?: number, groupId?: number }) {
+// Update Feed props
+type FeedProps = { user_id?: number, groupId?: number, showCreatePost?: boolean };
+
+export default function Feed({ user_id, groupId, showCreatePost = true }: FeedProps) {
     const [editorValue, setEditorValue] = useState('');
     const [media, setMedia] = useState<File | null>(null);
     const { auth } = usePage().props as any;
@@ -444,7 +447,9 @@ export default function Feed({ user_id, groupId }: { user_id?: number, groupId?:
             {deleting && <LoaderOverlay />}
             {showToast && <Toast message={toastMessage} onClose={() => setShowToast(false)} />}
             <div ref={feedContainerRef} className="flex flex-col gap-6 h-full min-h-0 max-h-screen overflow-y-auto feed-scroll">
-                <CreatePost onPostCreated={fetchPosts} />
+                {showCreatePost && (
+                    <CreatePost onPostCreated={fetchPosts} />
+                )}
 
                 {/* Skeleton Placeholder */}
                 {posts === null ? (
