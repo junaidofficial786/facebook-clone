@@ -37,6 +37,7 @@ export default function Feed() {
     const [viewMedia, setViewMedia] = useState<{ url: string, type: 'image' | 'video' } | null>(null);
     const [reactions, setReactions] = useState<{id:number, name:string, icon:string}[]>([]);
     const [reactingPostId, setReactingPostId] = useState<number|null>(null);
+    const [hoveredPostId, setHoveredPostId] = useState<number | null>(null);
 
     const loadingRef = useRef(loading);
     const hasMoreRef = useRef(hasMore);
@@ -44,6 +45,7 @@ export default function Feed() {
     const inFlightPages = useRef<Set<number>>(new Set());
     const didLogRef = useRef(false);
     const feedContainerRef = useRef<HTMLDivElement>(null);
+    const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
 
     const fetchPosts = async () => {
         try {
@@ -165,6 +167,15 @@ export default function Feed() {
       } finally {
         setReactingPostId(null);
       }
+    };
+
+    const handleMouseEnter = (postId: number) => {
+        if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
+        setHoveredPostId(postId);
+    };
+    const handleMouseLeave = () => {
+        if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
+        hoverTimeout.current = setTimeout(() => setHoveredPostId(null), 600);
     };
 
     // Scroll listener on feed container
@@ -506,21 +517,28 @@ export default function Feed() {
                         </CardContent>
                         <CardFooter className="flex flex-col gap-2">
                             <div className="flex gap-4 items-center mb-1">
-                                <div className="relative group w-fit">
-                                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-10 hidden group-hover:flex gap-2 bg-white dark:bg-gray-800 rounded-full shadow px-3 py-1 border border-gray-200 dark:border-gray-700 transition-all">
-                                        {reactions.map(r => (
-                                            <button
-                                                key={r.id}
-                                                className="text-xl hover:scale-125 transition-transform duration-100"
-                                                title={r.name}
-                                                onClick={() => handleReact(post.id, r.id)}
-                                                type="button"
-                                                disabled={reactingPostId === post.id}
-                                            >
-                                                {r.icon}
-                                            </button>
-                                        ))}
-                                    </div>
+                                {/* Update the popup and button wrapper: */}
+                                <div
+                                    className="relative w-fit"
+                                    onMouseEnter={() => handleMouseEnter(post.id)}
+                                    onMouseLeave={handleMouseLeave}
+                                >
+                                    {hoveredPostId === post.id && (
+                                        <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-10 flex gap-2 bg-white dark:bg-gray-800 rounded-full shadow px-3 py-1 border border-gray-200 dark:border-gray-700 transition-all">
+                                            {reactions.map(r => (
+                                                <button
+                                                    key={r.id}
+                                                    className="text-xl hover:scale-125 transition-transform duration-100"
+                                                    title={r.name}
+                                                    onClick={() => handleReact(post.id, r.id)}
+                                                    type="button"
+                                                    disabled={reactingPostId === post.id}
+                                                >
+                                                    {r.icon}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
                                     <Button
                                         variant="ghost"
                                         size="sm"
