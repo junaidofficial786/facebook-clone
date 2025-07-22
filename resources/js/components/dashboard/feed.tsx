@@ -70,6 +70,21 @@ function buildCommentTree(comments: any[]) {
 
 // Recursive comment tree renderer
 function CommentTree({ comments, postId, allUsers, ...props }: { comments: any[], postId: number, allUsers: any[], replyingTo: number | null, setReplyingTo: (id: number | null) => void, replyInputs: { [commentId: number]: string }, handleReplyInputChange: (commentId: number, value: string) => void, handleReplySubmit: (postId: number, parentCommentId: number) => void, reactions: { id: number, name: string, icon: string }[], handleCommentReact: (commentId: number, reactionId: number, currentReactionId?: number) => void, reactingPostId: number | null, hoveredCommentId: number | null, handleCommentMouseEnter: (commentId: number) => void, handleCommentMouseLeave: () => void, openReactionDialog: { postId?: number, commentId?: number, reactionId: number } | null, closeReactionDialog: () => void, loadingReactionUsers: boolean, reactionUsers: any[], handleEmojiClick: (postId: number | undefined, reactionId: number, commentId?: number) => void }) {
+    // Define the delayed hover handlers inside CommentTree so they are in scope
+    const commentLikeHoverTimeout = useRef<{ [commentId: number]: NodeJS.Timeout | null }>({});
+    const [localHoveredCommentId, setLocalHoveredCommentId] = useState<number | null>(null);
+
+    const handleCommentLikeMouseEnter = (commentId: number) => {
+      if (commentLikeHoverTimeout.current[commentId]) clearTimeout(commentLikeHoverTimeout.current[commentId]!);
+      commentLikeHoverTimeout.current[commentId] = setTimeout(() => {
+        setLocalHoveredCommentId(commentId);
+      }, 400);
+    };
+    const handleCommentLikeMouseLeave = (commentId: number) => {
+      if (commentLikeHoverTimeout.current[commentId]) clearTimeout(commentLikeHoverTimeout.current[commentId]!);
+      setLocalHoveredCommentId(null);
+    };
+
     return comments.map(comment => (
         <div key={comment.id} className="flex items-start gap-2 mt-2" style={{ marginLeft: comment.parent_id ? 32 : 0 }}>
             <Avatar className="h-7 w-7">
@@ -86,10 +101,10 @@ function CommentTree({ comments, postId, allUsers, ...props }: { comments: any[]
                 <div className="flex gap-3 mt-1 items-center">
                     <div
                         className="relative w-fit"
-                        onMouseEnter={() => props.handleCommentMouseEnter(comment.id)}
-                        onMouseLeave={props.handleCommentMouseLeave}
+                        onMouseEnter={() => handleCommentLikeMouseEnter(comment.id)}
+                        onMouseLeave={() => handleCommentLikeMouseLeave(comment.id)}
                     >
-                        {props.hoveredCommentId === comment.id && (
+                        {localHoveredCommentId === comment.id && (
                             <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-10 flex gap-2 bg-white dark:bg-gray-800 rounded-full shadow px-3 py-1 border border-gray-200 dark:border-gray-700 transition-all">
                                 {props.reactions.map(r => (
                                     <button

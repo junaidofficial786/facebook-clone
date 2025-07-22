@@ -25,6 +25,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/api/comments/{comment}/react', [App\Http\Controllers\FeedController::class, 'unreactToComment']);
     Route::post('/api/posts/{post}/comments', [\App\Http\Controllers\CommentController::class, 'store'])->middleware('auth');
     Route::get('/api/users', [\App\Http\Controllers\UserController::class, 'search']);
+    Route::get('/groups', function () {
+        return Inertia::render('groups');
+    })->name('groups');
+    Route::get('/groups/create', function () {
+        return Inertia::render('groups-create');
+    })->name('groups.create');
 });
 
 //an revern event that throws event for testing

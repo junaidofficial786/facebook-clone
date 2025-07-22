@@ -30,8 +30,8 @@ export function AppHeader() {
     const getInitials = useInitials();
     const appName = import.meta.env.VITE_APP_NAME || 'FacebookClone';
 
-    // Determine if /feed is active
     const isFeedActive = typeof window !== 'undefined' && window.location.pathname.startsWith('/feed');
+    const isGroupsActive = typeof window !== 'undefined' && window.location.pathname.startsWith('/groups');
 
     // Dummy data for messages and notifications
     const dummyMessages = [
@@ -105,9 +105,18 @@ export function AppHeader() {
                     <button className="group flex flex-col items-center justify-center px-3 py-1.5 rounded-md hover:bg-gray-100" title="Videos">
                         <PlaySquare className="h-6 w-6 text-gray-700 group-hover:text-gray-900" />
                     </button>
-                    <button className="group flex flex-col items-center justify-center px-3 py-1.5 rounded-md hover:bg-gray-100" title="Groups">
-                        <UsersRound className="h-6 w-6 text-gray-700 group-hover:text-gray-900" />
-                    </button>
+                    <Link
+                        href={route('groups')}
+                        className={
+                            'group flex flex-col items-center justify-center px-3 py-1.5 rounded-md hover:bg-gray-100 ' +
+                            (isGroupsActive ? 'bg-gray-100 text-gray-900' : '')
+                        }
+                        title="Groups"
+                    >
+                        <UsersRound className={
+                            'h-6 w-6 ' + (isGroupsActive ? 'bg-gray-100 text-gray-900' : '')
+                        } />
+                    </Link>
                     <button className="group flex flex-col items-center justify-center px-3 py-1.5 rounded-md hover:bg-gray-100" title="Games">
                         <Gamepad2 className="h-6 w-6 text-gray-700 group-hover:text-gray-900" />
                     </button>
