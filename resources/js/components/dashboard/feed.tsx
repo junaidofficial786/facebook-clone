@@ -69,7 +69,7 @@ function buildCommentTree(comments: any[]) {
 }
 
 // Recursive comment tree renderer
-function CommentTree({ comments, postId, ...props }: { comments: any[], postId: number, replyingTo: number | null, setReplyingTo: (id: number | null) => void, replyInputs: { [commentId: number]: string }, handleReplyInputChange: (commentId: number, value: string) => void, handleReplySubmit: (postId: number, parentCommentId: number) => void, reactions: { id: number, name: string, icon: string }[], handleCommentReact: (commentId: number, reactionId: number, currentReactionId?: number) => void, reactingPostId: number | null, hoveredCommentId: number | null, handleCommentMouseEnter: (commentId: number) => void, handleCommentMouseLeave: () => void, openReactionDialog: { postId?: number, commentId?: number, reactionId: number } | null, closeReactionDialog: () => void, loadingReactionUsers: boolean, reactionUsers: any[], handleEmojiClick: (postId: number | undefined, reactionId: number, commentId?: number) => void }) {
+function CommentTree({ comments, postId, allUsers, ...props }: { comments: any[], postId: number, allUsers: any[], replyingTo: number | null, setReplyingTo: (id: number | null) => void, replyInputs: { [commentId: number]: string }, handleReplyInputChange: (commentId: number, value: string) => void, handleReplySubmit: (postId: number, parentCommentId: number) => void, reactions: { id: number, name: string, icon: string }[], handleCommentReact: (commentId: number, reactionId: number, currentReactionId?: number) => void, reactingPostId: number | null, hoveredCommentId: number | null, handleCommentMouseEnter: (commentId: number) => void, handleCommentMouseLeave: () => void, openReactionDialog: { postId?: number, commentId?: number, reactionId: number } | null, closeReactionDialog: () => void, loadingReactionUsers: boolean, reactionUsers: any[], handleEmojiClick: (postId: number | undefined, reactionId: number, commentId?: number) => void }) {
     return comments.map(comment => (
         <div key={comment.id} className="flex items-start gap-2 mt-2" style={{ marginLeft: comment.parent_id ? 32 : 0 }}>
             <Avatar className="h-7 w-7">
@@ -81,7 +81,8 @@ function CommentTree({ comments, postId, ...props }: { comments: any[], postId: 
                     <Link href={`/settings/profile/${comment.user?.id}`} className="text-black font-medium hover:underline">{comment.user?.name}</Link>
                     <span className="text-xs text-muted-foreground font-normal">{comment.created_at_human}</span>
                 </div>
-                <div className="text-sm text-gray-700 whitespace-pre-line" dangerouslySetInnerHTML={{ __html: highlightMentions(comment.content, props.comments || []) }} />
+                {/* In the comment display inside CommentTree, use renderMentions(comment.content, allUsers) */}
+                <div className="text-sm text-gray-700 whitespace-pre-line">{renderMentions(comment.content, allUsers)}</div>
                 <div className="flex gap-3 mt-1 items-center">
                     <div
                         className="relative w-fit"
@@ -188,7 +189,7 @@ function CommentTree({ comments, postId, ...props }: { comments: any[], postId: 
                 )}
                 {/* Render children recursively */}
                 {comment.children && comment.children.length > 0 && (
-                    <CommentTree {...props} comments={comment.children} postId={postId} />
+                    <CommentTree {...props} comments={comment.children} postId={postId} allUsers={allUsers} />
                 )}
             </div>
         </div>
@@ -231,6 +232,20 @@ export default function Feed({ user_id, groupId, showCreatePost = true }: FeedPr
     // Add state for reply input per comment
     const [replyInputs, setReplyInputs] = useState<{ [commentId: number]: string }>({});
 
+    // Add state for all users
+    const [allUsers, setAllUsers] = useState<any[]>([]);
+
+    // Add a function to fetch all users
+    const fetchAllUsers = async () => {
+        const res = await axios.get('/api/users?search=');
+        setAllUsers(res.data.data || []);
+    };
+
+    // Fetch all users on feed load
+    useEffect(() => {
+        fetchAllUsers();
+    }, []);
+
     // Handle input change
     const handleCommentInputChange = (postId: number, value: string) => {
         setCommentInputs(inputs => ({ ...inputs, [postId]: value }));
@@ -250,6 +265,7 @@ export default function Feed({ user_id, groupId, showCreatePost = true }: FeedPr
                 ) : posts
             );
             setCommentInputs(inputs => ({ ...inputs, [postId]: '' }));
+            await fetchAllUsers(); // Re-fetch all users after comment submit
         } catch (e) {
             setToastMessage('Unable to add comment.');
             setShowToast(true);
@@ -541,9 +557,9 @@ export default function Feed({ user_id, groupId, showCreatePost = true }: FeedPr
 
     // Add mention style
     if (typeof window !== 'undefined') {
-      const style = document.createElement('style');
-      style.innerHTML = `.mention { font-weight: bold; color: #2563eb; }`;
-      document.head.appendChild(style);
+        const style = document.createElement('style');
+        style.innerHTML = `.mention { font-weight: bold; color: #2563eb; }`;
+        document.head.appendChild(style);
     }
 
     return (
@@ -903,250 +919,249 @@ export default function Feed({ user_id, groupId, showCreatePost = true }: FeedPr
                                 >
                                     {hoveredPostId === post.id && (
                                         <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-10 flex gap-2 bg-white dark:bg-gray-800 rounded-full shadow px-3 py-1 border border-gray-200 dark:border-gray-700 transition-all">
-                                        {reactions.map(r => (
-                                            <button
-                                                key={r.id}
-                                                className={`text-xl hover:scale-125 transition-transform duration-100${post.my_reaction && post.my_reaction.name === r.name ? ' ring-2 ring-blue-400' : ''}`}
-                                                title={r.name}
-                                                onClick={() => handleReact(post.id, r.id, post.my_reaction?.name === r.name ? r.id : undefined)}
-                                                type="button"
-                                                disabled={reactingPostId === post.id}
-                                            >
-                                                {r.icon}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className={`flex items-center gap-1 cursor-pointer ${post.liked_by_me ? 'text-blue-600' : ''}`}
-                                    onClick={() => post.liked_by_me ? handleUnreact(post.id) : handleReact(post.id, reactions.find(r => r.name === 'Like')?.id || reactions[0]?.id)}
-                                    disabled={reactingPostId === post.id}
-                                >
-                                    {post.my_reaction && post.my_reaction.icon ? (
-                                        <span className="text-xl">{post.my_reaction.icon}</span>
-                                    ) : (
-                                        <ThumbsUp className={`h-4 w-4 ${post.liked_by_me ? 'text-blue-600' : 'text-gray-700'}`} />
-                                    )}
-                                    <span>{post.my_reaction ? post.my_reaction.name : 'Like'}</span>
-                                </Button>
-                            </div>
-                            {/* Reaction Users Dialog */}
-                            {openReactionDialog && openReactionDialog.postId === post.id && (
-                                <CustomDialog open={true} onClose={closeReactionDialog} title="Users who reacted">
-                                    {loadingReactionUsers ? (
-                                        <div className="py-4 text-center">Loading...</div>
-                                    ) : reactionUsers.length > 0 ? (
-                                        <ul className="py-2 px-2 space-y-2">
-                                            {reactionUsers.map((user: any) => (
-                                                <li
-                                                    key={user.id}
-                                                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                            {reactions.map(r => (
+                                                <button
+                                                    key={r.id}
+                                                    className={`text-xl hover:scale-125 transition-transform duration-100${post.my_reaction && post.my_reaction.name === r.name ? ' ring-2 ring-blue-400' : ''}`}
+                                                    title={r.name}
+                                                    onClick={() => handleReact(post.id, r.id, post.my_reaction?.name === r.name ? r.id : undefined)}
+                                                    type="button"
+                                                    disabled={reactingPostId === post.id}
                                                 >
-                                                    <Avatar className="h-8 w-8 rounded-full ring-1 ring-gray-200 dark:ring-gray-700">
-                                                        <AvatarImage src={user.profile_pic} alt={user.name} />
-                                                        <AvatarFallback>{user.name?.[0]}</AvatarFallback>
-                                                    </Avatar>
-                                                    <span className="font-medium text-gray-900 dark:text-gray-100">{user.name}</span>
-                                                </li>
+                                                    {r.icon}
+                                                </button>
                                             ))}
-                                        </ul>
-                                    ) : (
-                                        <div className="py-4 text-center text-muted-foreground">No users found.</div>
-                                    )}
-                                </CustomDialog>
-                            )}
-                            <div className="flex items-center gap-1 bg-gray-100 text-gray-700 rounded-full px-2 py-0.5 text-xs font-medium">
-                                <MessageCircle className="h-4 w-4" />
-                                {post.comments?.length || 0}
-                            </div>
-                        </div>
-                        {/* Reactions below Like button */}
-                        {post.reactions_summary && post.reactions_summary.length > 0 && (
-                            <div className="flex flex-wrap items-center gap-2 mt-1">
-                                <span className="flex items-center gap-1">
-                                    {post.reactions_summary.map((r: any) => (
-                                        <span
-                                            key={r.reaction_id}
-                                            title={r.name}
-                                            className="text-lg cursor-pointer px-1 rounded hover:bg-gray-200"
-                                            onClick={e => { e.stopPropagation(); handleEmojiClick(post.id, r.reaction_id); }}
-                                        >
-                                            {r.icon}
-                                        </span>
-                                    ))}
-                                </span>
-                                <span className="text-xs text-muted-foreground ml-2">
-                                    {post.reactions_count} user{post.reactions_count !== 1 ? 's' : ''} reacted to this post
-                                </span>
-                            </div>
-                        )}
-                        {/* Comments and comment input */}
-                        <div className="mt-2 flex flex-col gap-3 w-full">
-                            {post.comments && post.comments.length > 0 && (
-                                <CommentTree
-                                    comments={buildCommentTree(post.comments || [])}
-                                    postId={post.id}
-                                    replyingTo={replyingTo}
-                                    setReplyingTo={setReplyingTo}
-                                    replyInputs={replyInputs}
-                                    handleReplyInputChange={handleReplyInputChange}
-                                    handleReplySubmit={handleReplySubmit}
-                                    reactions={reactions}
-                                    handleCommentReact={handleCommentReact}
-                                    reactingPostId={reactingPostId}
-                                    hoveredCommentId={hoveredCommentId}
-                                    handleCommentMouseEnter={handleCommentMouseEnter}
-                                    handleCommentMouseLeave={handleCommentMouseLeave}
-                                    openReactionDialog={openReactionDialog}
-                                    closeReactionDialog={closeReactionDialog}
-                                    loadingReactionUsers={loadingReactionUsers}
-                                    reactionUsers={reactionUsers}
-                                    handleEmojiClick={handleEmojiClick}
-                                />
-                            )}
-                            <div className="flex gap-2 mt-2">
-                                <div className="relative w-full">
-                                    <input
-                                        ref={el => { inputRefs.current[post.id] = el; }}
-                                        className="w-full border-input file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"
-                                        placeholder="Write a comment..."
-                                        value={commentInputs[post.id] || ''}
-                                        maxLength={100}
-                                        onChange={e => handleCommentInputChangeWithMention(post.id, e.target.value, e)}
-                                        onKeyDown={e => {
-                                            handleMentionKeyDown(e);
-                                            if (e.key === 'Enter' && !mentionDropdown && !e.shiftKey) {
-                                                e.preventDefault();
-                                                handleCommentSubmit(post.id);
-                                            }
-                                        }}
-                                    />
-                                    {mentionDropdown && mentionDropdown.postId === post.id && (
-                                        <div
-                                            ref={mentionDropdownRef}
-                                            style={{ position: 'absolute', zIndex: 50, top: '100%', left: 0, background: 'white', border: '1px solid #eee', borderRadius: 6, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', minWidth: 220 }}
-                                            className="mt-1"
-                                        >
-                                            {mentionLoading ? (
-                                                <div className="p-2 text-sm text-gray-500">Loading...</div>
-                                            ) : mentionUsers.length === 0 ? (
-                                                <div className="p-2 text-sm text-gray-500">No users found</div>
-                                            ) : (
-                                                mentionUsers.map((user, idx) => (
-                                                    <div
-                                                        key={user.id}
-                                                        className={`flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-gray-100 ${mentionSelected === idx ? 'bg-gray-100' : ''}`}
-                                                        onMouseDown={e => { e.preventDefault(); handleMentionSelect(user); }}
-                                                    >
-                                                        <img src={user.avatar || user.profile_pic} alt={user.name} className="w-6 h-6 rounded-full object-cover" />
-                                                        <span>{user.name}</span>
-                                                    </div>
-                                                ))
-                                            )}
                                         </div>
                                     )}
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className={`flex items-center gap-1 cursor-pointer ${post.liked_by_me ? 'text-blue-600' : ''}`}
+                                        onClick={() => post.liked_by_me ? handleUnreact(post.id) : handleReact(post.id, reactions.find(r => r.name === 'Like')?.id || reactions[0]?.id)}
+                                        disabled={reactingPostId === post.id}
+                                    >
+                                        {post.my_reaction && post.my_reaction.icon ? (
+                                            <span className="text-xl">{post.my_reaction.icon}</span>
+                                        ) : (
+                                            <ThumbsUp className={`h-4 w-4 ${post.liked_by_me ? 'text-blue-600' : 'text-gray-700'}`} />
+                                        )}
+                                        <span>{post.my_reaction ? post.my_reaction.name : 'Like'}</span>
+                                    </Button>
                                 </div>
-                                <Button
-                                    variant="default"
-                                    onClick={() => handleCommentSubmit(post.id)}
-                                    disabled={!(commentInputs[post.id] && commentInputs[post.id].trim())}
-                                    className="h-9"
-                                >
-                                    Comment
-                                </Button>
+                                {/* Reaction Users Dialog */}
+                                {openReactionDialog && openReactionDialog.postId === post.id && (
+                                    <CustomDialog open={true} onClose={closeReactionDialog} title="Users who reacted">
+                                        {loadingReactionUsers ? (
+                                            <div className="py-4 text-center">Loading...</div>
+                                        ) : reactionUsers.length > 0 ? (
+                                            <ul className="py-2 px-2 space-y-2">
+                                                {reactionUsers.map((user: any) => (
+                                                    <li
+                                                        key={user.id}
+                                                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                                    >
+                                                        <Avatar className="h-8 w-8 rounded-full ring-1 ring-gray-200 dark:ring-gray-700">
+                                                            <AvatarImage src={user.profile_pic} alt={user.name} />
+                                                            <AvatarFallback>{user.name?.[0]}</AvatarFallback>
+                                                        </Avatar>
+                                                        <span className="font-medium text-gray-900 dark:text-gray-100">{user.name}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        ) : (
+                                            <div className="py-4 text-center text-muted-foreground">No users found.</div>
+                                        )}
+                                    </CustomDialog>
+                                )}
+                                <div className="flex items-center gap-1 bg-gray-100 text-gray-700 rounded-full px-2 py-0.5 text-xs font-medium">
+                                    <MessageCircle className="h-4 w-4" />
+                                    {post.comments?.length || 0}
+                                </div>
                             </div>
-                            <div className="text-xs text-muted-foreground mt-1 text-right">
-                                {(commentInputs[post.id]?.length || 0)}/100
+                            {/* Reactions below Like button */}
+                            {post.reactions_summary && post.reactions_summary.length > 0 && (
+                                <div className="flex flex-wrap items-center gap-2 mt-1">
+                                    <span className="flex items-center gap-1">
+                                        {post.reactions_summary.map((r: any) => (
+                                            <span
+                                                key={r.reaction_id}
+                                                title={r.name}
+                                                className="text-lg cursor-pointer px-1 rounded hover:bg-gray-200"
+                                                onClick={e => { e.stopPropagation(); handleEmojiClick(post.id, r.reaction_id); }}
+                                            >
+                                                {r.icon}
+                                            </span>
+                                        ))}
+                                    </span>
+                                    <span className="text-xs text-muted-foreground ml-2">
+                                        {post.reactions_count} user{post.reactions_count !== 1 ? 's' : ''} reacted to this post
+                                    </span>
+                                </div>
+                            )}
+                            {/* Comments and comment input */}
+                            <div className="mt-2 flex flex-col gap-3 w-full">
+                                {post.comments && post.comments.length > 0 && (
+                                    <CommentTree
+                                        comments={buildCommentTree(post.comments || [])}
+                                        postId={post.id}
+                                        allUsers={allUsers}
+                                        replyingTo={replyingTo}
+                                        setReplyingTo={setReplyingTo}
+                                        replyInputs={replyInputs}
+                                        handleReplyInputChange={handleReplyInputChange}
+                                        handleReplySubmit={handleReplySubmit}
+                                        reactions={reactions}
+                                        handleCommentReact={handleCommentReact}
+                                        reactingPostId={reactingPostId}
+                                        hoveredCommentId={hoveredCommentId}
+                                        handleCommentMouseEnter={handleCommentMouseEnter}
+                                        handleCommentMouseLeave={handleCommentMouseLeave}
+                                        openReactionDialog={openReactionDialog}
+                                        closeReactionDialog={closeReactionDialog}
+                                        loadingReactionUsers={loadingReactionUsers}
+                                        reactionUsers={reactionUsers}
+                                        handleEmojiClick={handleEmojiClick}
+                                    />
+                                )}
+                                <div className="flex gap-2 mt-2">
+                                    <div className="relative w-full">
+                                        <input
+                                            ref={el => { inputRefs.current[post.id] = el; }}
+                                            className="w-full border-input file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"
+                                            placeholder="Write a comment..."
+                                            value={commentInputs[post.id] || ''}
+                                            maxLength={100}
+                                            onChange={e => handleCommentInputChangeWithMention(post.id, e.target.value, e)}
+                                            onKeyDown={e => {
+                                                handleMentionKeyDown(e);
+                                                if (e.key === 'Enter' && !mentionDropdown && !e.shiftKey) {
+                                                    e.preventDefault();
+                                                    handleCommentSubmit(post.id);
+                                                }
+                                            }}
+                                        />
+                                        {mentionDropdown && mentionDropdown.postId === post.id && (
+                                            <div
+                                                ref={mentionDropdownRef}
+                                                style={{ position: 'absolute', zIndex: 50, top: '100%', left: 0, background: 'white', border: '1px solid #eee', borderRadius: 6, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', minWidth: 220 }}
+                                                className="mt-1"
+                                            >
+                                                {mentionLoading ? (
+                                                    <div className="p-2 text-sm text-gray-500">Loading...</div>
+                                                ) : mentionUsers.length === 0 ? (
+                                                    <div className="p-2 text-sm text-gray-500">No users found</div>
+                                                ) : (
+                                                    mentionUsers.map((user, idx) => (
+                                                        <div
+                                                            key={user.id}
+                                                            className={`flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-gray-100 ${mentionSelected === idx ? 'bg-gray-100' : ''}`}
+                                                            onMouseDown={e => { e.preventDefault(); handleMentionSelect(user); }}
+                                                        >
+                                                            <img src={user.avatar || user.profile_pic} alt={user.name} className="w-6 h-6 rounded-full object-cover" />
+                                                            <span>{user.name}</span>
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <Button
+                                        variant="default"
+                                        onClick={() => handleCommentSubmit(post.id)}
+                                        disabled={!(commentInputs[post.id] && commentInputs[post.id].trim())}
+                                        className="h-9"
+                                    >
+                                        Comment
+                                    </Button>
+                                </div>
+                                <div className="text-xs text-muted-foreground mt-1 text-right">
+                                    {(commentInputs[post.id]?.length || 0)}/100
+                                </div>
                             </div>
-                        </div>
-                    </CardFooter>
-                </Card>
-            )) : <div>No posts found.</div>}
+                        </CardFooter>
+                    </Card>
+                )) : <div>No posts found.</div>}
 
-            {loading && <div className="text-center py-4 text-muted-foreground">Loading...</div>}
-            {!hasMore && <div className="text-center py-4 text-muted-foreground">No more posts</div>}
-        </div>
-        {/* Media View Modal */}
-        {viewMedia && (
-            <Dialog open={!!viewMedia} onOpenChange={open => !open && setViewMedia(null)}>
-                <DialogContent className="max-w-3xl flex flex-col items-center justify-center">
-                    <button className="absolute top-2 right-2 z-20 bg-black/60 hover:bg-black/80 text-white rounded-full p-2" onClick={() => setViewMedia(null)}>
-                        <X className="w-6 h-6" />
-                    </button>
-                    {viewMedia.type === 'image' ? (
-                        <img src={viewMedia.url} alt="View Media" className="max-h-[80vh] max-w-full rounded-lg" loading="lazy" />
-                    ) : (
-                        <video src={viewMedia.url} controls autoPlay className="max-h-[80vh] max-w-full rounded-lg bg-black object-contain" preload="none" style={{ aspectRatio: 'auto' }} />
-                    )}
-                </DialogContent>
-            </Dialog>
-        )}
-    </>
-);
+                {loading && <div className="text-center py-4 text-muted-foreground">Loading...</div>}
+                {!hasMore && <div className="text-center py-4 text-muted-foreground">No more posts</div>}
+            </div>
+            {/* Media View Modal */}
+            {viewMedia && (
+                <Dialog open={!!viewMedia} onOpenChange={open => !open && setViewMedia(null)}>
+                    <DialogContent className="max-w-3xl flex flex-col items-center justify-center">
+                        <button className="absolute top-2 right-2 z-20 bg-black/60 hover:bg-black/80 text-white rounded-full p-2" onClick={() => setViewMedia(null)}>
+                            <X className="w-6 h-6" />
+                        </button>
+                        {viewMedia.type === 'image' ? (
+                            <img src={viewMedia.url} alt="View Media" className="max-h-[80vh] max-w-full rounded-lg" loading="lazy" />
+                        ) : (
+                            <video src={viewMedia.url} controls autoPlay className="max-h-[80vh] max-w-full rounded-lg bg-black object-contain" preload="none" style={{ aspectRatio: 'auto' }} />
+                        )}
+                    </DialogContent>
+                </Dialog>
+            )}
+        </>
+    );
 }
 
 function highlightMentions(content: string, users: any[]) {
-  // Build a map of name to id for quick lookup
-  const nameToId: Record<string, number> = {};
-  users.forEach(u => {
-    if (u && u.user && u.user.name && u.user.id) {
-      nameToId[u.user.name] = u.user.id;
-    }
-  });
-  // Match @ followed by one or more words (letters, numbers, _, .), possibly separated by spaces
-  return content.replace(/(^|\s)(@[A-Za-z0-9_.]+(?: [A-Za-z0-9_.]+)*)/g, (match, p1, p2) => {
-    const name = p2.slice(1); // remove @
-    const id = nameToId[name];
-    if (id) {
-      return `${p1}<a href="/settings/profile/${id}" class="mention">${p2}</a>`;
-    } else {
-      return `${p1}<span class="mention">${p2}</span>`;
-    }
-  });
+    // Build a map of name to id for quick lookup
+    const nameToId: Record<string, number> = {};
+    users.forEach(u => {
+        if (u && u.user && u.user.name && u.user.id) {
+            nameToId[u.user.name] = u.user.id;
+        }
+    });
+    // Match @ followed by one or more words (letters, numbers, _, .), possibly separated by spaces
+    return content.replace(/(^|\s)(@[A-Za-z0-9_.]+(?: [A-Za-z0-9_.]+)*)/g, (match, p1, p2) => {
+        const name = p2.slice(1); // remove @
+        const id = nameToId[name];
+        if (id) {
+            return `${p1}<a href="/settings/profile/${id}" class="mention">${p2}</a>`;
+        } else {
+            return `${p1}<span class="mention">${p2}</span>`;
+        }
+    });
 }
 
-// Update renderMentions to accept post.user and post.comments, and build the user map from both
-function renderMentions(content: string, postUser: any, comments: any[]) {
-  // Build a map of name to id for quick lookup (post author + all unique comment users)
-  const nameToId: Record<string, number> = {};
-  if (postUser && postUser.name && postUser.id) {
-    nameToId[postUser.name] = postUser.id;
-  }
-  (comments || []).forEach(c => {
-    if (c && c.user && c.user.name && c.user.id) {
-      nameToId[c.user.name] = c.user.id;
+// Update renderMentions to use allUsers
+function renderMentions(content: string, allUsers: any[]) {
+    // Build a map of first word (lowercased) to id for quick lookup
+    const firstNameToId: Record<string, number> = {};
+    (allUsers || []).forEach(user => {
+        if (user && user.name && user.id) {
+            const first = user.name.split(' ')[0].toLowerCase();
+            firstNameToId[first] = user.id;
+        }
+    });
+    // Regex to match @ followed by a single word (stop at first space or punctuation)
+    const regex = /(@[A-Za-z0-9_.]+)/g;
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+    let key = 0;
+    while ((match = regex.exec(content)) !== null) {
+        if (match.index > lastIndex) {
+            parts.push(content.slice(lastIndex, match.index));
+        }
+        const mention = match[1];
+        const first = mention.slice(1).toLowerCase();
+        const id = firstNameToId[first];
+        if (id) {
+            parts.push(
+                <Link key={key++} href={`/settings/profile/${id}`} className="mention">
+                    {mention}
+                </Link>
+            );
+        } else {
+            parts.push(
+                <span key={key++} className="mention">{mention}</span>
+            );
+        }
+        lastIndex = match.index + mention.length;
     }
-  });
-  // Regex to match @Name (with spaces)
-  const regex = /(@[A-Za-z0-9_.]+(?: [A-Za-z0-9_.]+)*)/g;
-  const parts = [];
-  let lastIndex = 0;
-  let match;
-  let key = 0;
-  while ((match = regex.exec(content)) !== null) {
-    if (match.index > lastIndex) {
-      parts.push(content.slice(lastIndex, match.index));
+    if (lastIndex < content.length) {
+        parts.push(content.slice(lastIndex));
     }
-    const mention = match[1];
-    const name = mention.slice(1);
-    const id = nameToId[name];
-    if (id) {
-      parts.push(
-        <Link key={key++} href={`/settings/profile/${id}`} className="mention">
-          {mention}
-        </Link>
-      );
-    } else {
-      parts.push(
-        <span key={key++} className="mention">{mention}</span>
-      );
-    }
-    lastIndex = match.index + mention.length;
-  }
-  if (lastIndex < content.length) {
-    parts.push(content.slice(lastIndex));
-  }
-  return parts;
+    return parts;
 }
