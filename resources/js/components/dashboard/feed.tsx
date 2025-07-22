@@ -13,6 +13,41 @@ import Toast from '@/components/ui/toast';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import CustomDialog from '@/components/ui/CustomDialog';
 import { Link } from '@inertiajs/react';
+// Remove: import mentionsStyle from './mentionsStyle';
+// Add inline mentionsStyle object for react-mentions
+const mentionsStyle = {
+    control: {
+        backgroundColor: 'white',
+        fontSize: 16,
+        borderRadius: 6,
+        border: '1px solid #e5e7eb',
+        padding: '6px 12px',
+        minHeight: 36,
+        color: '#111827',
+    },
+    highlighter: {
+        overflow: 'hidden',
+    },
+    input: {
+        margin: 0,
+        minHeight: 36,
+    },
+    suggestions: {
+        list: {
+            backgroundColor: 'white',
+            border: '1px solid #e5e7eb',
+            fontSize: 16,
+            borderRadius: 6,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+            zIndex: 50,
+        },
+        item: {
+            padding: '6px 12px',
+            borderRadius: 6,
+            cursor: 'pointer',
+        },
+    },
+};
 
 // Helper to build comment tree from flat array
 function buildCommentTree(comments: any[]) {
@@ -165,7 +200,6 @@ type FeedProps = { user_id?: number, groupId?: number, showCreatePost?: boolean 
 
 export default function Feed({ user_id, groupId, showCreatePost = true }: FeedProps) {
     const [editorValue, setEditorValue] = useState('');
-    const [media, setMedia] = useState<File | null>(null);
     const { auth } = usePage().props as any;
     const currentUserId = auth?.user?.id;
     const [posts, setPosts] = useState<any[] | null>(null); // null means loading
@@ -204,7 +238,7 @@ export default function Feed({ user_id, groupId, showCreatePost = true }: FeedPr
 
     // Handle comment submit
     const handleCommentSubmit = async (postId: number) => {
-        const content = commentInputs[postId]?.trim();
+        const content = (commentInputs[postId] ?? '').trim();
         if (!content) return;
         try {
             const res = await axios.post(`/api/posts/${postId}/comments`, { content });
@@ -229,7 +263,7 @@ export default function Feed({ user_id, groupId, showCreatePost = true }: FeedPr
 
     // Handle reply submit
     const handleReplySubmit = async (postId: number, parentCommentId: number) => {
-        const content = replyInputs[parentCommentId]?.trim();
+        const content = (replyInputs[parentCommentId] ?? '').trim();
         if (!content) return;
         try {
             const res = await axios.post(`/api/posts/${postId}/comments`, { content, parent_id: parentCommentId });
@@ -286,22 +320,6 @@ export default function Feed({ user_id, groupId, showCreatePost = true }: FeedPr
         axios.get('/api/reactions').then(res => setReactions(res.data));
     }, []);
 
-    const insertTag = (tag: string, closeTag?: string) => {
-        const textarea = textareaRef.current;
-        if (!textarea) return;
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const before = editorValue.substring(0, start);
-        const selected = editorValue.substring(start, end);
-        const after = editorValue.substring(end);
-        setEditorValue(before + tag + selected + (closeTag || tag) + after);
-        setTimeout(() => {
-            textarea.focus();
-            textarea.selectionStart = textarea.selectionEnd = start + tag.length + selected.length + (closeTag ? closeTag.length : tag.length);
-        }, 0);
-    };
-
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     const fetchMorePosts = useCallback(async () => {
         const nextPage = pageRef.current + 1;
@@ -441,6 +459,80 @@ export default function Feed({ user_id, groupId, showCreatePost = true }: FeedPr
         container.addEventListener('scroll', handleScroll);
         return () => container.removeEventListener('scroll', handleScroll);
     }, [fetchMorePosts]);
+
+    // Add custom mention state and logic
+    const [mentionDropdown, setMentionDropdown] = useState<{ postId: number, query: string, position: { top: number, left: number } } | null>(null);
+    const [mentionUsers, setMentionUsers] = useState<any[]>([]);
+    const [mentionLoading, setMentionLoading] = useState(false);
+    const [mentionSelected, setMentionSelected] = useState(0);
+    const mentionDropdownRef = useRef<HTMLDivElement>(null);
+    const inputRefs = useRef<{ [postId: number]: HTMLInputElement | null }>({});
+
+    const fetchMentionUsers = async (query: string) => {
+        setMentionLoading(true);
+        try {
+            const res = await axios.get(`/api/users?search=${encodeURIComponent(query)}`);
+            setMentionUsers(res.data.data || []);
+        } catch {
+            setMentionUsers([]);
+        }
+        setMentionLoading(false);
+    };
+
+    const handleCommentInputChangeWithMention = (postId: number, value: string, e?: React.ChangeEvent<HTMLInputElement>) => {
+        setCommentInputs(inputs => ({ ...inputs, [postId]: value }));
+        // Detect @
+        const input = e?.target || inputRefs.current[postId];
+        if (!input) return;
+        const cursor = input.selectionStart || value.length;
+        const textBefore = value.slice(0, cursor);
+        const match = /(^|\s)@(\w*)$/.exec(textBefore);
+        if (match) {
+            const query = match[2] || '';
+            // Get position for dropdown (relative to input)
+            setMentionDropdown({ postId, query, position: { top: 0, left: 0 } });
+            fetchMentionUsers(query);
+            setMentionSelected(0);
+        } else {
+            setMentionDropdown(null);
+        }
+    };
+
+    const handleMentionSelect = (user: any) => {
+        if (!mentionDropdown) return;
+        const { postId } = mentionDropdown;
+        const input = inputRefs.current[postId];
+        const value = commentInputs[postId] || '';
+        if (!input) return;
+        const cursor = input.selectionStart || value.length;
+        const textBefore = value.slice(0, cursor);
+        const textAfter = value.slice(cursor);
+        const newTextBefore = textBefore.replace(/(^|\s)@(\w*)$/, `$1@${user.name}`);
+        const newValue = newTextBefore + textAfter;
+        setCommentInputs(inputs => ({ ...inputs, [postId]: newValue }));
+        setMentionDropdown(null);
+        setMentionUsers([]);
+        setTimeout(() => {
+            input.focus();
+            input.selectionStart = input.selectionEnd = newTextBefore.length;
+        }, 0);
+    };
+
+    const handleMentionKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (!mentionDropdown || mentionUsers.length === 0) return;
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            setMentionSelected(s => (s + 1) % mentionUsers.length);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            setMentionSelected(s => (s - 1 + mentionUsers.length) % mentionUsers.length);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            handleMentionSelect(mentionUsers[mentionSelected]);
+        } else if (e.key === 'Escape') {
+            setMentionDropdown(null);
+        }
+    };
 
     return (
         <>
@@ -903,19 +995,47 @@ export default function Feed({ user_id, groupId, showCreatePost = true }: FeedPr
                                     />
                                 )}
                                 <div className="flex gap-2 mt-2">
-                                    <Input
-                                        className="w-full"
-                                        placeholder="Write a comment..."
-                                        value={commentInputs[post.id] || ''}
-                                        maxLength={100}
-                                        onChange={e => handleCommentInputChange(post.id, e.target.value)}
-                                        onKeyDown={e => {
-                                            if (e.key === 'Enter' && !e.shiftKey) {
-                                                e.preventDefault();
-                                                handleCommentSubmit(post.id);
-                                            }
-                                        }}
-                                    />
+                                    <div className="relative w-full">
+                                        <input
+                                            ref={el => (inputRefs.current[post.id] = el)}
+                                            className="w-full border-input file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"
+                                            placeholder="Write a comment..."
+                                            value={commentInputs[post.id] || ''}
+                                            maxLength={100}
+                                            onChange={e => handleCommentInputChangeWithMention(post.id, e.target.value, e)}
+                                            onKeyDown={e => {
+                                                handleMentionKeyDown(e);
+                                                if (e.key === 'Enter' && !mentionDropdown && !e.shiftKey) {
+                                                    e.preventDefault();
+                                                    handleCommentSubmit(post.id);
+                                                }
+                                            }}
+                                        />
+                                        {mentionDropdown && mentionDropdown.postId === post.id && (
+                                            <div
+                                                ref={mentionDropdownRef}
+                                                style={{ position: 'absolute', zIndex: 50, top: '100%', left: 0, background: 'white', border: '1px solid #eee', borderRadius: 6, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', minWidth: 220 }}
+                                                className="mt-1"
+                                            >
+                                                {mentionLoading ? (
+                                                    <div className="p-2 text-sm text-gray-500">Loading...</div>
+                                                ) : mentionUsers.length === 0 ? (
+                                                    <div className="p-2 text-sm text-gray-500">No users found</div>
+                                                ) : (
+                                                    mentionUsers.map((user, idx) => (
+                                                        <div
+                                                            key={user.id}
+                                                            className={`flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-gray-100 ${mentionSelected === idx ? 'bg-gray-100' : ''}`}
+                                                            onMouseDown={e => { e.preventDefault(); handleMentionSelect(user); }}
+                                                        >
+                                                            <img src={user.avatar || user.profile_pic} alt={user.name} className="w-6 h-6 rounded-full object-cover" />
+                                                            <span>{user.name}</span>
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                     <Button
                                         variant="default"
                                         onClick={() => handleCommentSubmit(post.id)}
