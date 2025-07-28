@@ -25,7 +25,7 @@ function Dashboard() {
 
 
     return (
-        <div className="flex-1">
+        <div className="flex-1 h-full overflow-y-auto">
             <Feed/>
             {/* <Feed user_id={100} groupId={4} /> */}
         </div>
