@@ -3,6 +3,7 @@ import Feed from '@/components/dashboard/feed';
 import { useForm } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface GroupDetailProps {
   group: {
@@ -10,7 +11,8 @@ interface GroupDetailProps {
     name: string;
     cover?: string | null;
     members_count: number;
-    visibility: string; // Added visibility to the interface
+    visibility: string;
+    members: { id: number; name: string; profile_pic: string | null }[];
   };
 }
 
@@ -18,6 +20,7 @@ export default function GroupDetail({ group }: GroupDetailProps) {
   const { data, setData, post, processing, errors, reset } = useForm({ cover: null as File | null });
   const [preview, setPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [membersOpen, setMembersOpen] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
@@ -72,18 +75,39 @@ export default function GroupDetail({ group }: GroupDetailProps) {
             )}
           </form>
         {/* End upload UI */}
-          <div className="absolute left-8 -bottom-12 flex items-center">
+          <div className="absolute left-8 -bottom-12 flex items-center gap-4">
             <div className="text-3xl font-bold text-gray-900 bg-white px-6 py-2 rounded shadow">
               {group.name}
             </div>
+            <span className={`ml-4 px-3 py-1 rounded-full text-sm font-semibold ${group.visibility === 'public' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{group.visibility === 'public' ? 'Public' : 'Private'}</span>
           </div>
         </div>
         {/* Members Count */}
         <div className="flex items-center gap-4 px-8 pt-16 pb-4">
-          <span className="text-lg font-semibold text-gray-700">
+          <button type="button" className="text-lg font-semibold text-gray-700 hover:underline focus:outline-none" onClick={() => setMembersOpen(true)}>
             {group.members_count} Members
-          </span>
+          </button>
         </div>
+        {/* Members Popup */}
+        <Dialog open={membersOpen} onOpenChange={setMembersOpen}>
+          <DialogContent className="max-w-md w-full">
+            <DialogHeader>
+              <DialogTitle>Group Members</DialogTitle>
+            </DialogHeader>
+            <div className="divide-y max-h-96 overflow-y-auto">
+              {group.members.length === 0 ? (
+                <div className="py-4 text-center text-gray-500">No members yet.</div>
+              ) : (
+                group.members.map(member => (
+                  <div key={member.id} className="flex items-center gap-3 py-3">
+                    <img src={member.profile_pic || '/images/profile-image-placeholder.jpg'} alt={member.name} className="w-10 h-10 rounded-full object-cover border" />
+                    <span className="font-medium text-gray-900">{member.name}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
         {/* Feed */}
         <div className="px-8 pb-8">
           <Feed groupId={group.id} groupPrivacy={group.visibility} />
