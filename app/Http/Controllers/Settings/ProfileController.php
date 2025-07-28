@@ -66,6 +66,27 @@ class ProfileController extends Controller
             ];
         });
 
+                // Get friendship status between current user and profile user
+        $friendshipStatus = null;
+        $friendshipId = null;
+        $requestSentByMe = null;
+        if (!$isOwnProfile && $request->user()) {
+            $friendship = \App\Models\Friendship::where(function ($query) use ($user, $request) {
+                $query->where('user_id', $request->user()->id)
+                      ->where('friend_id', $user->id);
+            })->orWhere(function ($query) use ($user, $request) {
+                $query->where('user_id', $user->id)
+                      ->where('friend_id', $request->user()->id);
+            })->first();
+
+            if ($friendship) {
+                $friendshipStatus = $friendship->status;
+                $friendshipId = $friendship->id;
+                // Check if the current user sent the request
+                $requestSentByMe = $friendship->user_id === $request->user()->id;
+            }
+        }
+
         $userData = [
             'name' => $user->name,
             'coverPhoto' => $user->cover_pic ? url($user->cover_pic) : self::coverImagePlaceholder(),
@@ -78,6 +99,9 @@ class ProfileController extends Controller
             'friends' => $friends,
             'groups' => $groups,
             'posts' => [], // TODO: Load real posts
+            'friendshipStatus' => $friendshipStatus,
+            'friendshipId' => $friendshipId,
+            'requestSentByMe' => $requestSentByMe,
         ];
 
         return Inertia::render('settings/profile', [
@@ -162,6 +186,97 @@ class ProfileController extends Controller
         $friendship->delete();
 
         return response()->json(['success' => true, 'message' => 'Friend removed successfully']);
+    }
+
+    /**
+     * Send a friend request.
+     */
+    public function sendFriendRequest(Request $request)
+    {
+        $request->validate([
+            'friend_id' => 'required|exists:users,id'
+        ]);
+
+        $user = $request->user();
+        $friendId = $request->friend_id;
+
+        // Check if already friends or request exists
+        $existingFriendship = \App\Models\Friendship::where(function ($query) use ($user, $friendId) {
+            $query->where('user_id', $user->id)
+                  ->where('friend_id', $friendId);
+        })->orWhere(function ($query) use ($user, $friendId) {
+            $query->where('user_id', $friendId)
+                  ->where('friend_id', $user->id);
+        })->first();
+
+        if ($existingFriendship) {
+            if ($existingFriendship->status === 'accepted') {
+                return response()->json(['success' => false, 'message' => 'You are already friends with this user']);
+            } else if ($existingFriendship->status === 'pending') {
+                return response()->json(['success' => false, 'message' => 'Friend request already sent']);
+            }
+        }
+
+        // Create new friendship request
+        $friendship = \App\Models\Friendship::create([
+            'user_id' => $user->id,
+            'friend_id' => $friendId,
+            'status' => 'pending',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Friend request sent successfully',
+            'friendship_id' => $friendship->id
+        ]);
+    }
+
+    /**
+     * Accept a friend request.
+     */
+    public function acceptFriendRequest(Request $request)
+    {
+        $request->validate([
+            'friendship_id' => 'required|exists:friendships,id'
+        ]);
+
+        $user = $request->user();
+        $friendship = \App\Models\Friendship::where('id', $request->friendship_id)
+            ->where('friend_id', $user->id)
+            ->where('status', 'pending')
+            ->first();
+
+        if (!$friendship) {
+            return response()->json(['success' => false, 'message' => 'Friend request not found'], 404);
+        }
+
+        $friendship->update(['status' => 'accepted']);
+
+        return response()->json(['success' => true, 'message' => 'Friend request accepted successfully']);
+    }
+
+    /**
+     * Reject a friend request.
+     */
+    public function rejectFriendRequest(Request $request)
+    {
+        $request->validate([
+            'friendship_id' => 'required|exists:friendships,id'
+        ]);
+
+        $user = $request->user();
+        $friendship = \App\Models\Friendship::where('id', $request->friendship_id)
+            ->where('friend_id', $user->id)
+            ->where('status', 'pending')
+            ->first();
+
+        if (!$friendship) {
+            return response()->json(['success' => false, 'message' => 'Friend request not found'], 404);
+        }
+
+        $friendship->delete();
+
+        return response()->json(['success' => true, 'message' => 'Friend request rejected successfully']);
     }
 
     /**

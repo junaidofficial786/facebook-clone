@@ -21,6 +21,9 @@ interface ProfilePageProps {
         friends: Array<{ id: number; name: string; profilePic: string; friendship_id: number }>;
         groups: Array<{ id: number; name: string; cover: string; members_count: number }>;
         posts: Array<{ id: number; content: string; created_at: string }>;
+        friendshipStatus?: string | null;
+        friendshipId?: number | null;
+        requestSentByMe?: boolean | null;
     };
     isOwnProfile: boolean;
 }
@@ -49,6 +52,13 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
     const [loadingBio, setLoadingBio] = useState(false);
     const [loadingInfo, setLoadingInfo] = useState(false);
     const [unfriending, setUnfriending] = useState<number | null>(null);
+    const [sendingRequest, setSendingRequest] = useState(false);
+    const [acceptingRequest, setAcceptingRequest] = useState(false);
+    const [rejectingRequest, setRejectingRequest] = useState(false);
+    // Add state for dynamic friendship status updates
+    const [currentFriendshipStatus, setCurrentFriendshipStatus] = useState(user.friendshipStatus);
+    const [currentFriendshipId, setCurrentFriendshipId] = useState(user.friendshipId);
+    const [currentRequestSentByMe, setCurrentRequestSentByMe] = useState(user.requestSentByMe);
 
     const { show: showToast } = useToast();
 
@@ -239,7 +249,10 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
 
             if (data.success) {
                 showToast('Friend removed successfully');
-                window.location.reload(); // Refresh to update the friends list
+                // Update state dynamically instead of reloading
+                setCurrentFriendshipStatus(null);
+                setCurrentFriendshipId(null);
+                setCurrentRequestSentByMe(null);
             } else {
                 showToast('Failed to remove friend');
             }
@@ -247,6 +260,92 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
             showToast('Failed to remove friend');
         } finally {
             setUnfriending(null);
+        }
+    };
+
+    const handleSendFriendRequest = async () => {
+        setSendingRequest(true);
+        try {
+            const res = await fetch('/settings/profile/send-friend-request', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                body: JSON.stringify({ friend_id: userIdToShow }),
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                showToast('Friend request sent successfully');
+                // Update state dynamically instead of reloading
+                setCurrentFriendshipStatus('pending');
+                setCurrentRequestSentByMe(true);
+                setCurrentFriendshipId(data.friendship_id);
+            } else {
+                showToast(data.message || 'Failed to send friend request');
+            }
+        } catch (error) {
+            showToast('Failed to send friend request');
+        } finally {
+            setSendingRequest(false);
+        }
+    };
+
+    const handleAcceptFriendRequest = async () => {
+        setAcceptingRequest(true);
+        try {
+            const res = await fetch('/settings/profile/accept-friend-request', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                body: JSON.stringify({ friendship_id: currentFriendshipId }),
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                showToast('Friend request accepted successfully');
+                // Update state dynamically instead of reloading
+                setCurrentFriendshipStatus('accepted');
+                setCurrentRequestSentByMe(false);
+            } else {
+                showToast(data.message || 'Failed to accept friend request');
+            }
+        } catch (error) {
+            showToast('Failed to accept friend request');
+        } finally {
+            setAcceptingRequest(false);
+        }
+    };
+
+    const handleRejectFriendRequest = async () => {
+        setRejectingRequest(true);
+        try {
+            const res = await fetch('/settings/profile/reject-friend-request', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                body: JSON.stringify({ friendship_id: currentFriendshipId }),
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                showToast('Friend request rejected successfully');
+                // Update state dynamically instead of reloading
+                setCurrentFriendshipStatus(null);
+                setCurrentFriendshipId(null);
+                setCurrentRequestSentByMe(null);
+            } else {
+                showToast(data.message || 'Failed to reject friend request');
+            }
+        } catch (error) {
+            showToast('Failed to reject friend request');
+        } finally {
+            setRejectingRequest(false);
         }
     };
 
@@ -303,6 +402,89 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
                     </div>
                     <div className="ml-6">
                         <div className="text-2xl mt-14 font-bold text-gray-900">{user.name}</div>
+                        {/* Friend Button - Only show if not own profile */}
+                        {!isOwnProfile && (
+                            <div className="mt-4">
+                                {currentFriendshipStatus === 'accepted' ? (
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => handleUnfriend(currentFriendshipId!, user.name)}
+                                        disabled={unfriending === currentFriendshipId}
+                                        className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300"
+                                    >
+                                        {unfriending === currentFriendshipId ? (
+                                            <>
+                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600 mr-2"></div>
+                                                Unfriending...
+                                            </>
+                                        ) : (
+                                            'Unfriend'
+                                        )}
+                                    </Button>
+                                ) : currentFriendshipStatus === 'pending' ? (
+                                    currentRequestSentByMe ? (
+                                        // I sent the request - show "Request Sent"
+                                        <Button
+                                            variant="outline"
+                                            disabled
+                                            className="text-gray-500 bg-gray-100 cursor-not-allowed"
+                                        >
+                                            Request Sent
+                                        </Button>
+                                    ) : (
+                                        // I received the request - show Accept/Reject buttons
+                                        <div className="flex gap-2">
+                                            <Button
+                                                variant="default"
+                                                onClick={handleAcceptFriendRequest}
+                                                disabled={acceptingRequest}
+                                                className="bg-green-600 hover:bg-green-700"
+                                            >
+                                                {acceptingRequest ? (
+                                                    <>
+                                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                                        Accepting...
+                                                    </>
+                                                ) : (
+                                                    'Accept Request'
+                                                )}
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                onClick={handleRejectFriendRequest}
+                                                disabled={rejectingRequest}
+                                                className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300"
+                                            >
+                                                {rejectingRequest ? (
+                                                    <>
+                                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600 mr-2"></div>
+                                                        Rejecting...
+                                                    </>
+                                                ) : (
+                                                    'Reject'
+                                                )}
+                                            </Button>
+                                        </div>
+                                    )
+                                ) : (
+                                    <Button
+                                        variant="default"
+                                        onClick={handleSendFriendRequest}
+                                        disabled={sendingRequest}
+                                        className="bg-blue-600 hover:bg-blue-700"
+                                    >
+                                        {sendingRequest ? (
+                                            <>
+                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                                Sending Request...
+                                            </>
+                                        ) : (
+                                            'Add Friend'
+                                        )}
+                                    </Button>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

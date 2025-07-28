@@ -380,6 +380,13 @@ export default function Feed({ user_id, groupId, showCreatePost = true, groupPri
             const urlParams = [];
             if (user_id) urlParams.push(`user_id=${user_id}`);
             if (groupId) urlParams.push(`group_id=${groupId}`);
+
+            // Check if we're on the feed page and should show only friends' posts
+            const isOnFeedPage = typeof window !== 'undefined' && window.location.pathname.includes('feed');
+            if (isOnFeedPage && !user_id && !groupId) {
+                urlParams.push('friends_only=true');
+            }
+
             const url = urlParams.length ? `/api/posts?${urlParams.join('&')}` : '/api/posts';
             const res = await axios.get(url);
             setPosts(res.data.data || []);
@@ -419,6 +426,13 @@ export default function Feed({ user_id, groupId, showCreatePost = true, groupPri
             const urlParams = [`page=${nextPage}`];
             if (user_id) urlParams.push(`user_id=${user_id}`);
             if (groupId) urlParams.push(`group_id=${groupId}`);
+
+            // Check if we're on the feed page and should show only friends' posts
+            const isOnFeedPage = typeof window !== 'undefined' && window.location.pathname.includes('feed');
+            if (isOnFeedPage && !user_id && !groupId) {
+                urlParams.push('friends_only=true');
+            }
+
             const url = `/api/posts?${urlParams.join('&')}`;
             const res = await axios.get(url);
             setPosts((prev: any[] | null) => prev ? [...prev, ...res.data.data] : res.data.data);

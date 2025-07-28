@@ -15,6 +15,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('settings/profile/bio', [ProfileController::class, 'updateBio'])->name('profile.bio');
     Route::patch('settings/profile/info', [ProfileController::class, 'updateInfo'])->name('profile.info');
 Route::post('settings/profile/unfriend', [ProfileController::class, 'unfriend'])->name('profile.unfriend');
+Route::post('settings/profile/send-friend-request', [ProfileController::class, 'sendFriendRequest'])->name('profile.send-friend-request');
+Route::post('settings/profile/accept-friend-request', [ProfileController::class, 'acceptFriendRequest'])->name('profile.accept-friend-request');
+Route::post('settings/profile/reject-friend-request', [ProfileController::class, 'rejectFriendRequest'])->name('profile.reject-friend-request');
 
     Route::get('settings/password', [PasswordController::class, 'edit'])->name('password.edit');
     Route::put('settings/password', [PasswordController::class, 'update'])->name('password.update');

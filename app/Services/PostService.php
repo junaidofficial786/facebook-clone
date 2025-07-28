@@ -10,7 +10,7 @@ class PostService
 {
     const MEDIA_DISK = 'public';
 
-    public static function fetchFeedPosts($perPage = 10, $page = null, $userId = null, $groupId = null)
+    public static function fetchFeedPosts($perPage = 10, $page = null, $userId = null, $groupId = null, $friendsOnly = false)
     {
         // dd($perPage);
         $authUserId = Auth::id();
@@ -35,6 +35,30 @@ class PostService
         }
         if ($groupId) {
             $query->where('group_id', $groupId);
+        }
+
+        // Filter for friends-only posts when requested
+        if ($friendsOnly && $authUserId) {
+            // Get user's friends
+            $friendIds = \App\Models\Friendship::where(function($query) use ($authUserId) {
+                $query->where('user_id', $authUserId)
+                      ->orWhere('friend_id', $authUserId);
+            })
+            ->where('status', 'accepted')
+            ->get()
+            ->map(function($friendship) use ($authUserId) {
+                return $friendship->user_id === $authUserId ? $friendship->friend_id : $friendship->user_id;
+            })
+            ->toArray();
+
+            // Add current user to the list (so they see their own posts too)
+            $friendIds[] = $authUserId;
+
+            // Filter posts to only show posts from friends or public posts
+            $query->where(function($q) use ($friendIds) {
+                $q->whereIn('user_id', $friendIds)
+                  ->orWhere('visibility', 'public');
+            });
         }
 
         $paginator = $query->paginate($perPage, ['*'], 'page', $page);
@@ -98,9 +122,9 @@ class PostService
         return $paginator;
     }
 
-    public static function getFeedPosts($perPage = 10, $page = null, $userId = null, $groupId = null)
+    public static function getFeedPosts($perPage = 10, $page = null, $userId = null, $groupId = null, $friendsOnly = false)
     {
-        return self::fetchFeedPosts($perPage, $page, $userId, $groupId);
+        return self::fetchFeedPosts($perPage, $page, $userId, $groupId, $friendsOnly);
     }
 
     /**

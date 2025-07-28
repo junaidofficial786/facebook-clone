@@ -27,7 +27,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/api/posts/{post}/react', [FeedController::class, 'unreactToPost']);
     Route::post('/api/comments/{comment}/react', [FeedController::class, 'reactToComment']);
     Route::delete('/api/comments/{comment}/react', [FeedController::class, 'unreactToComment']);
-    Route::post('/api/posts/{post}/comments', [\App\Http\Controllers\CommentController::class, 'store'])->middleware('auth');
+    Route::post('/api/posts/{post}/comments', [\App\Http\Controllers\CommentController::class, 'store']);
     Route::delete('/api/comments/{comment}', [\App\Http\Controllers\CommentController::class, 'destroy'])->name('comments.destroy');
     Route::get('/api/users', [\App\Http\Controllers\UserController::class, 'search']);
 

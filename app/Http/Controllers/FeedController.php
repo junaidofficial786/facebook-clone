@@ -18,7 +18,7 @@ class FeedController extends Controller
 
     public function __invoke(Request $request)
     {
-        $posts = PostService::getFeedPosts(self::PER_PAGE_POSTS);
+        $posts = PostService::getFeedPosts(self::PER_PAGE_POSTS, null, null, null, true);
         return Inertia::render('dashboard', [
             'posts' => $posts,
         ]);
@@ -30,7 +30,8 @@ class FeedController extends Controller
         $page = $request->input('page', null);
         $userId = $request->input('user_id', null);
         $groupId = $request->input('group_id', null);
-        $posts = PostService::getFeedPosts($perPage, $page, $userId, $groupId);
+        $friendsOnly = $request->input('friends_only', false);
+        $posts = PostService::getFeedPosts($perPage, $page, $userId, $groupId, $friendsOnly);
         return response()->json($posts);
     }
 
