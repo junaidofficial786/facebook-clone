@@ -251,7 +251,7 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
     };
 
     return (
-        <div className="max-w-7xl w-full mx-auto mt-6 bg-white rounded-xl shadow-lg overflow-hidden">
+        <div className="max-w-7xl w-full mx-auto mt-6 bg-white rounded-xl shadow-lg overflow-y-auto">
             {(loadingProfile || loadingCover || loadingBio || loadingInfo) && <LoaderOverlay />}
             {/* Cover Photo */}
             <div className="relative h-60 bg-gray-200">
@@ -349,7 +349,7 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
             {/* Tab Content */}
             <div className="px-8 py-6 min-h-[300px] bg-gray-50">
                 {tab === 'posts' && (
-                    <div className="h-[600px] overflow-y-auto">
+                    <div>
                         <Feed user_id={userIdToShow} showCreatePost={showCreatePost} />
                     </div>
                 )}
