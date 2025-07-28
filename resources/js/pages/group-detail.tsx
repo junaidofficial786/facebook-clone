@@ -31,6 +31,12 @@ interface PendingRequest {
   requested_at: string;
 }
 
+interface Friend {
+  id: number;
+  name: string;
+  profile_pic: string | null;
+}
+
 export default function GroupDetail({ group }: GroupDetailProps) {
   const { data, setData, post, processing, errors, reset } = useForm({ cover: null as File | null });
   const [preview, setPreview] = useState<string | null>(null);
@@ -41,6 +47,10 @@ export default function GroupDetail({ group }: GroupDetailProps) {
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
   const [loadingRequests, setLoadingRequests] = useState(false);
   const [processingRequest, setProcessingRequest] = useState<number | null>(null);
+  const [friendsOpen, setFriendsOpen] = useState(false);
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [loadingFriends, setLoadingFriends] = useState(false);
+  const [addingFriend, setAddingFriend] = useState<number | null>(null);
   const { show: showToast } = useToast();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -142,6 +152,44 @@ export default function GroupDetail({ group }: GroupDetailProps) {
     }
   };
 
+  const loadFriends = async () => {
+    setLoadingFriends(true);
+    try {
+      const response = await axios.get(`/groups/${group.id}/friends`);
+      if (response.data.success) {
+        setFriends(response.data.friends);
+      } else {
+        showToast(response.data.message || 'Failed to load friends');
+      }
+    } catch (error) {
+      showToast('Failed to load friends');
+    } finally {
+      setLoadingFriends(false);
+    }
+  };
+
+  const handleAddFriendToGroup = async (friendId: number) => {
+    setAddingFriend(friendId);
+    try {
+      const response = await axios.post(`/groups/${group.id}/add-friend`, {
+        friend_id: friendId
+      });
+      if (response.data.success) {
+        showToast('Friend added to group successfully');
+        // Remove friend from list
+        setFriends(prev => prev.filter(friend => friend.id !== friendId));
+        // Refresh the page to update member count
+        window.location.reload();
+      } else {
+        showToast(response.data.message || 'Failed to add friend to group');
+      }
+    } catch (error) {
+      showToast('Failed to add friend to group');
+    } finally {
+      setAddingFriend(null);
+    }
+  };
+
   return (
     <>
       <Head title={group.name} />
@@ -197,6 +245,18 @@ export default function GroupDetail({ group }: GroupDetailProps) {
                 }}
               >
                 {group.pending_requests_count} Pending Request{group.pending_requests_count > 1 ? 's' : ''}
+              </button>
+            )}
+            {group.is_member && (
+              <button
+                type="button"
+                className="text-lg font-semibold text-green-600 hover:text-green-700 focus:outline-none bg-green-50 px-3 py-1 rounded-full"
+                onClick={() => {
+                  loadFriends();
+                  setFriendsOpen(true);
+                }}
+              >
+                Add Friends
               </button>
             )}
           </div>
@@ -277,6 +337,53 @@ export default function GroupDetail({ group }: GroupDetailProps) {
                           )}
                         </Button>
                       </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+          {/* Friends Popup */}
+          <Dialog open={friendsOpen} onOpenChange={setFriendsOpen}>
+            <DialogContent className="max-w-md w-full">
+              <DialogHeader>
+                <DialogTitle>Add Friends to Group</DialogTitle>
+              </DialogHeader>
+              <div className="divide-y max-h-96 overflow-y-auto">
+                {loadingFriends ? (
+                  <div className="py-4 text-center">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600 mx-auto"></div>
+                    <p className="text-gray-500 mt-2">Loading friends...</p>
+                  </div>
+                ) : friends.length === 0 ? (
+                  <div className="py-4 text-center text-gray-500">
+                    <p>No friends available to add.</p>
+                    <p className="text-sm mt-1">All your friends are already in this group.</p>
+                  </div>
+                ) : (
+                  friends.map(friend => (
+                    <div key={friend.id} className="flex items-center justify-between py-3">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={friend.profile_pic || '/images/profile-image-placeholder.jpg'}
+                          alt={friend.name}
+                          className="w-10 h-10 rounded-full object-cover border"
+                        />
+                        <span className="font-medium text-gray-900">{friend.name}</span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="default"
+                        onClick={() => handleAddFriendToGroup(friend.id)}
+                        disabled={addingFriend === friend.id}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        {addingFriend === friend.id ? (
+                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                        ) : (
+                          'Add'
+                        )}
+                      </Button>
                     </div>
                   ))
                 )}

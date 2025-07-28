@@ -43,6 +43,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/groups/{group}/pending-requests', [GroupController::class, 'getPendingRequests'])->name('groups.pending-requests');
     Route::post('/groups/{group}/approve-request', [GroupController::class, 'approveRequest'])->name('groups.approve-request');
     Route::post('/groups/{group}/reject-request', [GroupController::class, 'rejectRequest'])->name('groups.reject-request');
+    Route::get('/groups/{group}/friends', [GroupController::class, 'getFriendsNotInGroup'])->name('groups.friends');
+    Route::post('/groups/{group}/add-friend', [GroupController::class, 'addFriendToGroup'])->name('groups.add-friend');
 
     // People routes
     Route::get('/people', [PeopleController::class, 'index'])->name('people');
