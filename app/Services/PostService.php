@@ -30,6 +30,8 @@ class PostService
 
         if ($userId) {
             $query->where('user_id', $userId);
+            // Exclude group posts when viewing user profile
+            $query->whereNull('group_id');
         }
         if ($groupId) {
             $query->where('group_id', $groupId);
