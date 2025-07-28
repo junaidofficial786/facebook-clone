@@ -27,7 +27,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/api/posts/{post}/comments', [\App\Http\Controllers\CommentController::class, 'store'])->middleware('auth');
     Route::get('/api/users', [\App\Http\Controllers\UserController::class, 'search']);
     Route::get('/groups', function () {
-        return Inertia::render('groups');
+        $user = request()->user();
+        $joinedGroups = \App\Models\Group::whereHas('groupMembers', function($q) use ($user) {
+            $q->where('user_id', $user->id)->where('status', 'accepted');
+        })
+        ->withCount('groupMembers')
+        ->get(['id', 'name'])
+        ->map(function($group) {
+            return [
+                'id' => $group->id,
+                'name' => $group->name,
+                'members' => $group->group_members_count,
+            ];
+        });
+        return Inertia::render('groups', [
+            'joinedGroups' => $joinedGroups,
+        ]);
     })->name('groups');
     Route::get('/groups/create', function () {
         return Inertia::render('groups-create');

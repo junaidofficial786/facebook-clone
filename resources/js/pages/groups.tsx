@@ -1,14 +1,12 @@
 import { Button } from '@/components/ui/button';
 import { Link } from '@inertiajs/react';
 import { AppShell } from '@/layouts/app/app-shell';
+import { usePage } from '@inertiajs/react';
 const route = (window as any).route;
 
 export default function GroupsPage() {
+    const { joinedGroups = [] } = usePage().props as any;
     // Dummy data for now
-    const joinedGroups = [
-        { id: 1, name: 'React Developers', members: 1200 },
-        { id: 2, name: 'Laravel Pakistan', members: 800 },
-    ];
     const moreGroups = [
         { id: 3, name: 'Open Source Enthusiasts', members: 500 },
         { id: 4, name: 'UI/UX Designers', members: 300 },
@@ -25,9 +23,11 @@ export default function GroupsPage() {
                 <div className="mb-8">
                     <h2 className="text-lg font-semibold mb-2">Groups you have joined</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {joinedGroups.map(group => (
+                        {(joinedGroups as {id: number, name: string, members: number}[]).map(group => (
                             <div key={group.id} className="p-4 bg-white rounded-lg shadow border flex flex-col">
-                                <span className="font-medium text-lg">{group.name}</span>
+                                <Link href={route('groups.show', group.id)} className="font-medium text-lg hover:underline">
+                                    {group.name}
+                                </Link>
                                 <span className="text-sm text-muted-foreground">{group.members} members</span>
                             </div>
                         ))}
