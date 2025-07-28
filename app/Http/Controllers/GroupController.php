@@ -9,6 +9,19 @@ use App\Services\GroupService;
 
 class GroupController extends Controller
 {
+    public function index(Request $request)
+    {
+        $user = $request->user();
+
+        $joinedGroups = GroupService::getJoinedGroups($user);
+        $moreGroups = GroupService::getMoreGroups($user, 50);
+
+        return Inertia::render('groups', [
+            'joinedGroups' => $joinedGroups,
+            'moreGroups' => $moreGroups,
+        ]);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
