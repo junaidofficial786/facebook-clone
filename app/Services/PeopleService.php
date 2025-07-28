@@ -39,7 +39,35 @@ class PeopleService
             ->select('id', 'name', 'profile_pic')
             ->inRandomOrder()
             ->limit($limit)
-            ->get();
+            ->get()
+            ->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'profile_pic' => $user->profile_pic ? url($user->profile_pic) : null,
+                ];
+            });
+    }
+
+    public static function getFriends(User $user)
+    {
+        return Friendship::where(function ($query) use ($user) {
+            $query->where('user_id', $user->id)
+                  ->where('status', 'accepted');
+        })->orWhere(function ($query) use ($user) {
+            $query->where('friend_id', $user->id)
+                  ->where('status', 'accepted');
+        })->with(['user:id,name,profile_pic', 'friend:id,name,profile_pic'])
+        ->get()
+        ->map(function ($friendship) use ($user) {
+            // Determine which user is the friend (not the current user)
+            $friend = $friendship->user_id === $user->id ? $friendship->friend : $friendship->user;
+            return [
+                'id' => $friend->id,
+                'name' => $friend->name,
+                'profile_pic' => $friend->profile_pic ? url($friend->profile_pic) : null,
+            ];
+        });
     }
 
     public static function sendFriendRequest(User $user, int $friendId)

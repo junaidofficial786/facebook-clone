@@ -60,7 +60,7 @@ class PeopleController extends Controller
         return response()->json($result, $result['success'] ? 200 : 404);
     }
 
-    public function getSuggestedPeople(Request $request)
+        public function getSuggestedPeople(Request $request)
     {
         $user = Auth::user();
         $limit = $request->input('limit', 5);
@@ -70,6 +70,17 @@ class PeopleController extends Controller
         return response()->json([
             'success' => true,
             'data' => $suggestedPeople
+        ]);
+    }
+
+    public function getFriends(Request $request)
+    {
+        $user = Auth::user();
+        $friends = PeopleService::getFriends($user);
+
+        return response()->json([
+            'success' => true,
+            'data' => $friends
         ]);
     }
 }

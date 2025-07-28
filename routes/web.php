@@ -31,6 +31,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/api/comments/{comment}', [\App\Http\Controllers\CommentController::class, 'destroy'])->name('comments.destroy');
     Route::get('/api/users', [\App\Http\Controllers\UserController::class, 'search']);
     Route::get('/api/suggested-people', [\App\Http\Controllers\PeopleController::class, 'getSuggestedPeople']);
+    Route::get('/api/friends', [\App\Http\Controllers\PeopleController::class, 'getFriends']);
 
     // Groups routes
     Route::get('/groups', [GroupController::class, 'index'])->name('groups');
