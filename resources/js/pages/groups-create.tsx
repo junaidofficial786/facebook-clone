@@ -54,7 +54,7 @@ export default function GroupsCreate() {
             </select>
             {errors.visibility && <div className="text-red-500 text-sm mt-1">{errors.visibility}</div>}
           </div>
-          <Button type="submit" variant="primary" className="w-full" disabled={processing}>
+          <Button type="submit" variant="default" className="w-full hover:cursor-pointer" disabled={processing}>
             {processing ? 'Creating...' : 'Create Group'}
           </Button>
         </form>

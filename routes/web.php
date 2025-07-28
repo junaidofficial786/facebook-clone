@@ -33,6 +33,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('groups-create');
     })->name('groups.create');
     Route::post('/groups', [GroupController::class, 'store'])->name('groups.store');
+    Route::get('/groups/{group}', [GroupController::class, 'show'])->name('groups.show');
 });
 
 //an revern event that throws event for testing

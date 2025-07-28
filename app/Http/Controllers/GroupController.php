@@ -21,4 +21,19 @@ class GroupController extends Controller
 
         return redirect()->route('groups')->with('success', 'Group created successfully!');
     }
+
+    public function show($groupId)
+    {
+        $group = \App\Models\Group::withCount('groupMembers')->findOrFail($groupId);
+        // Placeholder: cover, name, members_count, id
+        $groupData = [
+            'id' => $group->id,
+            'name' => $group->name,
+            'cover' => $group->cover ?? null, // add cover logic if exists
+            'members_count' => $group->group_members_count,
+        ];
+        return \Inertia\Inertia::render('group-detail', [
+            'group' => $groupData,
+        ]);
+    }
 }

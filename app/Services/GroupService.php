@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Group;
 use App\Models\User;
+use App\Models\GroupMember;
 
 class GroupService
 {
@@ -16,11 +17,19 @@ class GroupService
      */
     public static function createGroup(User $user, array $data): Group
     {
-        return Group::create([
+        $group = Group::create([
             'name' => $data['name'],
             'description' => $data['description'],
             'visibility' => $data['visibility'],
             'created_by' => $user->id,
         ]);
+        // Add creator as group member (admin, accepted)
+        GroupMember::create([
+            'group_id' => $group->id,
+            'user_id' => $user->id,
+            'role' => 'admin',
+            'status' => 'accepted',
+        ]);
+        return $group;
     }
 }
