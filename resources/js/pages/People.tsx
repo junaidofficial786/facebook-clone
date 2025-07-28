@@ -129,7 +129,6 @@ export default function People({ pendingRequests, suggestedPeople }: PeopleProps
                                                 size="sm"
                                                 onClick={() => handleAcceptRequest(request.id)}
                                                 disabled={loadingStates[`accept-${request.id}`]}
-                                                className="bg-green-600 hover:bg-green-700"
                                             >
                                                 {loadingStates[`accept-${request.id}`] ? (
                                                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>

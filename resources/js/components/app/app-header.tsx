@@ -179,7 +179,7 @@ export function AppHeader() {
                         <DropdownMenuTrigger asChild>
                             <button className="ml-2 rounded-full border-2 border-transparent hover:border-gray-400 focus:outline-none focus:border-gray-400 transition-colors">
                                 <Avatar className="h-8 w-8">
-                                    <AvatarImage src={auth?.user?.avatar} alt={auth?.user?.name} />
+                                    <AvatarImage src={auth?.user?.profile_pic} alt={auth?.user?.name} />
                                     <AvatarFallback>{getInitials(auth?.user?.name)}</AvatarFallback>
                                 </Avatar>
                             </button>
