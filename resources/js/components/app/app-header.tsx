@@ -197,12 +197,12 @@ export function AppHeader() {
                                     Password
                                 </Link>
                             </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
+                            {/* <DropdownMenuItem asChild>
                                 <Link href="/settings/appearance" className="flex items-center gap-2">
                                     <Paintbrush className="h-4 w-4" />
                                     Appearance
                                 </Link>
-                            </DropdownMenuItem>
+                            </DropdownMenuItem> */}
                             <DropdownMenuItem asChild>
                                 <Link href="/logout" method="post" as="button" className="flex items-center gap-2 block w-full">
                                     <LogOut className="h-4 w-4" />

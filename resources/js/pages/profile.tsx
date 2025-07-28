@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Pencil, Camera, Users, Info, List, UserCircle2, Upload, X, Check } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
@@ -59,6 +59,8 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
     const [currentFriendshipStatus, setCurrentFriendshipStatus] = useState(user.friendshipStatus);
     const [currentFriendshipId, setCurrentFriendshipId] = useState(user.friendshipId);
     const [currentRequestSentByMe, setCurrentRequestSentByMe] = useState(user.requestSentByMe);
+    // Add state for friends list to enable dynamic updates
+    const [friendsList, setFriendsList] = useState(user.friends);
 
     const { show: showToast } = useToast();
 
@@ -74,6 +76,11 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
     const userIdToShow = urlUserId !== undefined ? urlUserId : authUserId;
 
     const showCreatePost = userIdToShow === authUserId;
+
+    // Sync friends list when user prop changes
+    useEffect(() => {
+        setFriendsList(user.friends);
+    }, [user.friends]);
 
     // Handlers for profile image
     const handleProfileEdit = () => profileInputRef.current?.click();
@@ -253,6 +260,8 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
                 setCurrentFriendshipStatus(null);
                 setCurrentFriendshipId(null);
                 setCurrentRequestSentByMe(null);
+                // Remove the friend from the local friends list
+                setFriendsList(prevFriends => prevFriends.filter(friend => friend.friendship_id !== friendshipId));
             } else {
                 showToast('Failed to remove friend');
             }
@@ -579,7 +588,7 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
                 )}
                 {tab === 'friends' && (
                     <div className="space-y-6">
-                        {user.friends.length === 0 ? (
+                        {friendsList.length === 0 ? (
                             <div className="text-center py-12 text-muted-foreground">
                                 <Users className="h-16 w-16 mx-auto mb-4 opacity-50" />
                                 <p className="text-lg font-medium">No friends yet</p>
@@ -587,7 +596,7 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {user.friends.map(friend => (
+                                {friendsList.map(friend => (
                                     <div key={friend.id} className="flex flex-col items-center bg-card rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 p-6 border border-border">
                                         <Link href={`/settings/profile/${friend.id}`} className="flex flex-col items-center group">
                                             <img src={friend.profilePic} alt={friend.name} className="w-20 h-20 rounded-full object-cover mb-3 shadow-md group-hover:shadow-lg transition-shadow duration-200" />
