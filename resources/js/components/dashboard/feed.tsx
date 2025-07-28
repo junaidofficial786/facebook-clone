@@ -69,7 +69,7 @@ function buildCommentTree(comments: any[]) {
 }
 
 // Recursive comment tree renderer
-function CommentTree({ comments, postId, allUsers, ...props }: { comments: any[], postId: number, allUsers: any[], replyingTo: number | null, setReplyingTo: (id: number | null) => void, replyInputs: { [commentId: number]: string }, handleReplyInputChange: (commentId: number, value: string) => void, handleReplySubmit: (postId: number, parentCommentId: number) => void, reactions: { id: number, name: string, icon: string }[], handleCommentReact: (commentId: number, reactionId: number, currentReactionId?: number) => void, reactingPostId: number | null, hoveredCommentId: number | null, handleCommentMouseEnter: (commentId: number) => void, handleCommentMouseLeave: () => void, openReactionDialog: { postId?: number, commentId?: number, reactionId: number } | null, closeReactionDialog: () => void, loadingReactionUsers: boolean, reactionUsers: any[], handleEmojiClick: (postId: number | undefined, reactionId: number, commentId?: number) => void }) {
+function CommentTree({ comments, postId, allUsers, ...props }: { comments: any[], postId: number, allUsers: any[], replyingTo: number | null, setReplyingTo: (id: number | null) => void, replyInputs: { [commentId: number]: string }, handleReplyInputChange: (commentId: number, value: string) => void, handleReplySubmit: (postId: number, parentCommentId: number) => void, reactions: { id: number, name: string, icon: string }[], handleCommentReact: (commentId: number, reactionId: number, currentReactionId?: number) => void, reactingPostId: number | null, hoveredCommentId: number | null, handleCommentMouseEnter: (commentId: number) => void, handleCommentMouseLeave: () => void, openReactionDialog: { postId?: number, commentId?: number, reactionId: number } | null, closeReactionDialog: () => void, loadingReactionUsers: boolean, reactionUsers: any[], handleEmojiClick: (postId: number | undefined, reactionId: number, commentId?: number) => void, handleDeleteComment: (commentId: number) => void, deletingComment: boolean, deleteCommentId: number | null, currentUserId: number | undefined, submittingReply: number | null }) {
     // Define the delayed hover handlers inside CommentTree so they are in scope
     const commentLikeHoverTimeout = useRef<{ [commentId: number]: NodeJS.Timeout | null }>({});
     const [localHoveredCommentId, setLocalHoveredCommentId] = useState<number | null>(null);
@@ -98,85 +98,98 @@ function CommentTree({ comments, postId, allUsers, ...props }: { comments: any[]
                 </div>
                 {/* In the comment display inside CommentTree, use renderMentions(comment.content, allUsers) */}
                 <div className="text-sm text-gray-700 whitespace-pre-line">{renderMentions(comment.content, allUsers)}</div>
-                <div className="flex gap-3 mt-1 items-center">
-                    <div
-                        className="relative w-fit"
-                        onMouseEnter={() => handleCommentLikeMouseEnter(comment.id)}
-                        onMouseLeave={() => handleCommentLikeMouseLeave(comment.id)}
-                    >
-                        {localHoveredCommentId === comment.id && (
-                            <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-10 flex gap-2 bg-white dark:bg-gray-800 rounded-full shadow px-3 py-1 border border-gray-200 dark:border-gray-700 transition-all">
-                                {props.reactions.map(r => (
-                                    <button
-                                        key={r.id}
-                                        className={`text-xl hover:scale-125 transition-transform duration-100${comment.my_reaction && comment.my_reaction.name === r.name ? ' ring-2 ring-blue-400' : ''}`}
+                <div className="flex gap-3 mt-1 items-center justify-between">
+                    <div className="flex gap-3 items-center">
+                        <div
+                            className="relative w-fit"
+                            onMouseEnter={() => handleCommentLikeMouseEnter(comment.id)}
+                            onMouseLeave={() => handleCommentLikeMouseLeave(comment.id)}
+                        >
+                            {localHoveredCommentId === comment.id && (
+                                <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-10 flex gap-2 bg-white dark:bg-gray-800 rounded-full shadow px-3 py-1 border border-gray-200 dark:border-gray-700 transition-all">
+                                    {props.reactions.map(r => (
+                                        <button
+                                            key={r.id}
+                                            className={`text-xl hover:scale-125 transition-transform duration-100${comment.my_reaction && comment.my_reaction.name === r.name ? ' ring-2 ring-blue-400' : ''}`}
+                                            title={r.name}
+                                            onClick={() => props.handleCommentReact(comment.id, r.id, comment.my_reaction?.name === r.name ? r.id : undefined)}
+                                            type="button"
+                                            disabled={props.reactingPostId === comment.id}
+                                        >
+                                            {r.icon}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className={`px-2 py-0.5 text-xs h-7 cursor-pointer ${comment.liked_by_me ? 'text-blue-600' : ''}`}
+                                onClick={() => comment.liked_by_me ? props.handleCommentReact(comment.id, comment.my_reaction?.id, comment.my_reaction?.id) : props.handleCommentReact(comment.id, props.reactions.find(r => r.name === 'Like')?.id || props.reactions[0]?.id)}
+                                disabled={props.reactingPostId === comment.id}
+                            >
+                                {comment.my_reaction && comment.my_reaction.icon ? (
+                                    <span className="text-lg">{comment.my_reaction.icon}</span>
+                                ) : (
+                                    <ThumbsUp className={`h-3.5 w-3.5 mr-1 ${comment.liked_by_me ? 'text-blue-600' : 'text-gray-700'}`} />
+                                )}
+                                <span>{comment.my_reaction ? comment.my_reaction.name : 'Like'}</span>
+                            </Button>
+                        </div>
+                        {/* Comment reactions summary */}
+                        {comment.reactions_summary && comment.reactions_summary.length > 0 && (
+                            <span className="flex items-center gap-0.5 ml-2">
+                                {comment.reactions_summary.map((r: any) => (
+                                    <span
+                                        key={r.reaction_id}
                                         title={r.name}
-                                        onClick={() => props.handleCommentReact(comment.id, r.id, comment.my_reaction?.name === r.name ? r.id : undefined)}
-                                        type="button"
-                                        disabled={props.reactingPostId === comment.id}
+                                        className="text-lg cursor-pointer px-1 rounded hover:bg-gray-200"
+                                        onClick={e => { e.stopPropagation(); props.handleEmojiClick(undefined, r.reaction_id, comment.id); }}
                                     >
-                                        {r.icon}
-                                    </button>
+                                        {r.icon} <span className="text-xs align-middle">{r.count}</span>
+                                    </span>
                                 ))}
-                            </div>
+                            </span>
+                        )}
+                        {/* Comment Reaction Users Dialog */}
+                        {props.openReactionDialog && props.openReactionDialog.commentId === comment.id && (
+                            <CustomDialog open={true} onClose={props.closeReactionDialog} title="Users who reacted">
+                                {props.loadingReactionUsers ? (
+                                    <div className="py-4 text-center">Loading...</div>
+                                ) : props.reactionUsers.length > 0 ? (
+                                    <ul className="py-2">
+                                        {props.reactionUsers.map((user: any) => (
+                                            <li key={user.id} className="py-1 flex items-center gap-2">
+                                                <Avatar className="h-6 w-6"><AvatarImage src={user.profile_pic} alt={user.name} /><AvatarFallback>{user.name?.[0]}</AvatarFallback></Avatar>
+                                                <span>{user.name}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <div className="py-4 text-center text-muted-foreground">No users found.</div>
+                                )}
+                            </CustomDialog>
                         )}
                         <Button
                             variant="ghost"
                             size="sm"
-                            className={`px-2 py-0.5 text-xs h-7 cursor-pointer ${comment.liked_by_me ? 'text-blue-600' : ''}`}
-                            onClick={() => comment.liked_by_me ? props.handleCommentReact(comment.id, comment.my_reaction?.id, comment.my_reaction?.id) : props.handleCommentReact(comment.id, props.reactions.find(r => r.name === 'Like')?.id || props.reactions[0]?.id)}
-                            disabled={props.reactingPostId === comment.id}
+                            className="px-2 py-0.5 text-xs h-7 cursor-pointer"
+                            onClick={() => props.setReplyingTo(props.replyingTo === comment.id ? null : comment.id)}
                         >
-                            {comment.my_reaction && comment.my_reaction.icon ? (
-                                <span className="text-lg">{comment.my_reaction.icon}</span>
-                            ) : (
-                                <ThumbsUp className={`h-3.5 w-3.5 mr-1 ${comment.liked_by_me ? 'text-blue-600' : 'text-gray-700'}`} />
-                            )}
-                            <span>{comment.my_reaction ? comment.my_reaction.name : 'Like'}</span>
+                            Reply
                         </Button>
                     </div>
-                    {/* Comment reactions summary */}
-                    {comment.reactions_summary && comment.reactions_summary.length > 0 && (
-                        <span className="flex items-center gap-0.5 ml-2">
-                            {comment.reactions_summary.map((r: any) => (
-                                <span
-                                    key={r.reaction_id}
-                                    title={r.name}
-                                    className="text-lg cursor-pointer px-1 rounded hover:bg-gray-200"
-                                    onClick={e => { e.stopPropagation(); props.handleEmojiClick(undefined, r.reaction_id, comment.id); }}
-                                >
-                                    {r.icon} <span className="text-xs align-middle">{r.count}</span>
-                                </span>
-                            ))}
-                        </span>
+                    {comment.user?.id === props.currentUserId && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="px-2 py-0.5 text-xs h-7 cursor-pointer"
+                            onClick={() => props.handleDeleteComment(comment.id)}
+                            disabled={props.deletingComment && props.deleteCommentId === comment.id}
+                        >
+                            <X className="h-4 w-4" />
+                        </Button>
                     )}
-                    {/* Comment Reaction Users Dialog */}
-                    {props.openReactionDialog && props.openReactionDialog.commentId === comment.id && (
-                        <CustomDialog open={true} onClose={props.closeReactionDialog} title="Users who reacted">
-                            {props.loadingReactionUsers ? (
-                                <div className="py-4 text-center">Loading...</div>
-                            ) : props.reactionUsers.length > 0 ? (
-                                <ul className="py-2">
-                                    {props.reactionUsers.map((user: any) => (
-                                        <li key={user.id} className="py-1 flex items-center gap-2">
-                                            <Avatar className="h-6 w-6"><AvatarImage src={user.profile_pic} alt={user.name} /><AvatarFallback>{user.name?.[0]}</AvatarFallback></Avatar>
-                                            <span>{user.name}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            ) : (
-                                <div className="py-4 text-center text-muted-foreground">No users found.</div>
-                            )}
-                        </CustomDialog>
-                    )}
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="px-2 py-0.5 text-xs h-7 cursor-pointer"
-                        onClick={() => props.setReplyingTo(props.replyingTo === comment.id ? null : comment.id)}
-                    >
-                        Reply
-                    </Button>
                 </div>
                 {props.replyingTo === comment.id && (
                     <div className="mt-2 flex gap-2">
@@ -195,10 +208,17 @@ function CommentTree({ comments, postId, allUsers, ...props }: { comments: any[]
                         <Button
                             variant="default"
                             onClick={() => props.handleReplySubmit(postId, comment.id)}
-                            disabled={!(props.replyInputs[comment.id] && props.replyInputs[comment.id].trim())}
+                            disabled={!(props.replyInputs[comment.id] && props.replyInputs[comment.id].trim()) || props.submittingReply === comment.id}
                             className="h-8"
                         >
-                            Reply
+                            {props.submittingReply === comment.id ? (
+                                <>
+                                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
+                                    Replying...
+                                </>
+                            ) : (
+                                'Reply'
+                            )}
                         </Button>
                     </div>
                 )}
@@ -225,9 +245,13 @@ export default function Feed({ user_id, groupId, showCreatePost = true, groupPri
     const [replyingTo, setReplyingTo] = useState<number | null>(null);
     const [deleting, setDeleting] = useState(false);
     const [deleteId, setDeleteId] = useState<number | null>(null);
+    const [deletingComment, setDeletingComment] = useState(false);
+    const [deleteCommentId, setDeleteCommentId] = useState<number | null>(null);
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+    const [submittingComment, setSubmittingComment] = useState<number | null>(null);
+    const [submittingReply, setSubmittingReply] = useState<number | null>(null);
     const [openReactionDialog, setOpenReactionDialog] = useState<{ postId?: number, commentId?: number, reactionId: number } | null>(null);
     const [reactionUsers, setReactionUsers] = useState<any[]>([]);
     const [loadingReactionUsers, setLoadingReactionUsers] = useState(false);
@@ -270,6 +294,8 @@ export default function Feed({ user_id, groupId, showCreatePost = true, groupPri
     const handleCommentSubmit = async (postId: number) => {
         const content = (commentInputs[postId] ?? '').trim();
         if (!content) return;
+
+        setSubmittingComment(postId);
         try {
             const res = await axios.post(`/api/posts/${postId}/comments`, { content });
             setPosts((posts: any[] | null) =>
@@ -284,6 +310,8 @@ export default function Feed({ user_id, groupId, showCreatePost = true, groupPri
         } catch (e) {
             setToastMessage('Unable to add comment.');
             setShowToast(true);
+        } finally {
+            setSubmittingComment(null);
         }
     };
 
@@ -296,6 +324,8 @@ export default function Feed({ user_id, groupId, showCreatePost = true, groupPri
     const handleReplySubmit = async (postId: number, parentCommentId: number) => {
         const content = (replyInputs[parentCommentId] ?? '').trim();
         if (!content) return;
+
+        setSubmittingReply(parentCommentId);
         try {
             const res = await axios.post(`/api/posts/${postId}/comments`, { content, parent_id: parentCommentId });
             setPosts((posts: any[] | null) =>
@@ -309,6 +339,8 @@ export default function Feed({ user_id, groupId, showCreatePost = true, groupPri
         } catch (e) {
             setToastMessage('Unable to add reply.');
             setShowToast(true);
+        } finally {
+            setSubmittingReply(null);
         }
     };
 
@@ -390,6 +422,22 @@ export default function Feed({ user_id, groupId, showCreatePost = true, groupPri
         }
         setDeleting(false);
         setDeleteId(null);
+    };
+
+    const handleDeleteComment = async (commentId: number) => {
+        setDeletingComment(true);
+        setDeleteCommentId(commentId);
+        try {
+            await axios.delete(`/api/comments/${commentId}`);
+            await fetchPosts(); // Refresh posts to update comments
+            setToastMessage('Comment successfully deleted');
+            setShowToast(true);
+        } catch (e) {
+            setToastMessage('Unable to delete comment.');
+            setShowToast(true);
+        }
+        setDeletingComment(false);
+        setDeleteCommentId(null);
     };
 
     const openDeleteDialog = (postId: number) => setConfirmDeleteId(postId);
@@ -1043,6 +1091,11 @@ export default function Feed({ user_id, groupId, showCreatePost = true, groupPri
                                         loadingReactionUsers={loadingReactionUsers}
                                         reactionUsers={reactionUsers}
                                         handleEmojiClick={handleEmojiClick}
+                                        handleDeleteComment={handleDeleteComment}
+                                        deletingComment={deletingComment}
+                                        deleteCommentId={deleteCommentId}
+                                        currentUserId={currentUserId}
+                                        submittingReply={submittingReply}
                                     />
                                 )}
                                 <div className="flex gap-2 mt-2">
@@ -1090,10 +1143,17 @@ export default function Feed({ user_id, groupId, showCreatePost = true, groupPri
                                     <Button
                                         variant="default"
                                         onClick={() => handleCommentSubmit(post.id)}
-                                        disabled={!(commentInputs[post.id] && commentInputs[post.id].trim())}
+                                        disabled={!(commentInputs[post.id] && commentInputs[post.id].trim()) || submittingComment === post.id}
                                         className="h-9"
                                     >
-                                        Comment
+                                        {submittingComment === post.id ? (
+                                            <>
+                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                                Commenting...
+                                            </>
+                                        ) : (
+                                            'Comment'
+                                        )}
                                     </Button>
                                 </div>
                                 <div className="text-xs text-muted-foreground mt-1 text-right">

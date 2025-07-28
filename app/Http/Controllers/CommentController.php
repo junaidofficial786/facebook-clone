@@ -26,4 +26,17 @@ class CommentController extends Controller
 
         return response()->json(['comment' => $comment], 201);
     }
+
+    public function destroy(Request $request, $commentId)
+    {
+        $comment = Comment::findOrFail($commentId);
+
+        // Check if user owns the comment
+        if ($comment->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $comment->delete();
+        return response()->json(['message' => 'Comment deleted successfully']);
+    }
 }
