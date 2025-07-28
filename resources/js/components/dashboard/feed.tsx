@@ -545,20 +545,17 @@ export default function Feed({ user_id, groupId, showCreatePost = true, groupPri
 
     // Scroll listener on feed container
     useEffect(() => {
-        const container = feedContainerRef.current;
-        if (!container) return;
-
         const handleScroll = () => {
             if (
-                container.scrollTop + container.clientHeight + 100 >=
-                container.scrollHeight
+                window.innerHeight + window.scrollY + 100 >=
+                document.documentElement.scrollHeight
             ) {
                 fetchMorePosts();
             }
         };
 
-        container.addEventListener('scroll', handleScroll);
-        return () => container.removeEventListener('scroll', handleScroll);
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
     }, [fetchMorePosts]);
 
     // Add custom mention state and logic
