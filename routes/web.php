@@ -6,6 +6,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\FeedController;
 use App\Http\Controllers\GroupController;
+use App\Http\Controllers\PeopleController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -51,6 +52,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/groups', [GroupController::class, 'store'])->name('groups.store');
     Route::get('/groups/{group}', [GroupController::class, 'show'])->name('groups.show');
     Route::post('/groups/{group}/cover', [GroupController::class, 'updateCover'])->name('groups.cover');
+
+    // People routes
+    Route::get('/people', [PeopleController::class, 'index'])->name('people');
+    Route::post('/api/friend-request', [PeopleController::class, 'sendFriendRequest'])->name('friend.request');
+    Route::post('/api/friend-request/accept', [PeopleController::class, 'acceptFriendRequest'])->name('friend.accept');
+    Route::post('/api/friend-request/reject', [PeopleController::class, 'rejectFriendRequest'])->name('friend.reject');
 });
 
 //an revern event that throws event for testing

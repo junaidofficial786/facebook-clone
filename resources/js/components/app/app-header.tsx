@@ -32,6 +32,7 @@ export function AppHeader() {
 
     const isFeedActive = typeof window !== 'undefined' && window.location.pathname.startsWith('/feed');
     const isGroupsActive = typeof window !== 'undefined' && window.location.pathname.startsWith('/groups');
+    const isPeopleActive = typeof window !== 'undefined' && window.location.pathname.startsWith('/people');
 
     // Dummy data for messages and notifications
     const dummyMessages = [
@@ -99,9 +100,18 @@ export function AppHeader() {
                             'h-6 w-6 ' + (isFeedActive ? 'text-gray-900' : 'text-gray-700 group-hover:text-gray-900')
                         } />
                     </Link>
-                    <button className="group flex flex-col items-center justify-center px-3 py-1.5 rounded-md hover:bg-gray-100" title="People">
-                        <Users className="h-6 w-6 text-gray-700 group-hover:text-gray-900" />
-                    </button>
+                    <Link
+                        href="/people"
+                        className={
+                            'group flex flex-col items-center justify-center px-3 py-1.5 rounded-md hover:bg-gray-100 ' +
+                            (isPeopleActive ? 'bg-gray-100 text-gray-900' : '')
+                        }
+                        title="People"
+                    >
+                        <Users className={
+                            'h-6 w-6 ' + (isPeopleActive ? 'text-gray-900' : 'text-gray-700 group-hover:text-gray-900')
+                        } />
+                    </Link>
                     <button className="group flex flex-col items-center justify-center px-3 py-1.5 rounded-md hover:bg-gray-100" title="Videos">
                         <PlaySquare className="h-6 w-6 text-gray-700 group-hover:text-gray-900" />
                     </button>
