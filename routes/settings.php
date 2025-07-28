@@ -14,6 +14,7 @@ Route::middleware('auth')->group(function () {
     Route::post('settings/profile/photo', [ProfileController::class, 'updatePhoto'])->name('profile.photo');
     Route::patch('settings/profile/bio', [ProfileController::class, 'updateBio'])->name('profile.bio');
     Route::patch('settings/profile/info', [ProfileController::class, 'updateInfo'])->name('profile.info');
+Route::post('settings/profile/unfriend', [ProfileController::class, 'unfriend'])->name('profile.unfriend');
 
     Route::get('settings/password', [PasswordController::class, 'edit'])->name('password.edit');
     Route::put('settings/password', [PasswordController::class, 'update'])->name('password.update');

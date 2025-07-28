@@ -6,6 +6,7 @@ import LoaderOverlay from '@/components/ui/loader';
 import Feed from '@/components/dashboard/feed';
 import { usePage } from '@inertiajs/react';
 import { useParams } from 'react-router-dom';
+import { Link } from '@inertiajs/react';
 
 interface ProfilePageProps {
     user: {
@@ -17,8 +18,8 @@ interface ProfilePageProps {
         gender: string;
         birthday: string;
         location: string;
-        friends: Array<{ id: number; name: string; profilePic: string }>;
-        groups: Array<{ id: number; name: string; cover: string }>;
+        friends: Array<{ id: number; name: string; profilePic: string; friendship_id: number }>;
+        groups: Array<{ id: number; name: string; cover: string; members_count: number }>;
         posts: Array<{ id: number; content: string; created_at: string }>;
     };
     isOwnProfile: boolean;
@@ -47,6 +48,7 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
     const [loadingCover, setLoadingCover] = useState(false);
     const [loadingBio, setLoadingBio] = useState(false);
     const [loadingInfo, setLoadingInfo] = useState(false);
+    const [unfriending, setUnfriending] = useState<number | null>(null);
 
     const { show: showToast } = useToast();
 
@@ -218,6 +220,36 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
         }
     };
 
+    const handleUnfriend = async (friendshipId: number, friendName: string) => {
+        if (!confirm(`Are you sure you want to unfriend ${friendName}?`)) {
+            return;
+        }
+
+        setUnfriending(friendshipId);
+        try {
+            const res = await fetch('/settings/profile/unfriend', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                body: JSON.stringify({ friendship_id: friendshipId }),
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                showToast('Friend removed successfully');
+                window.location.reload(); // Refresh to update the friends list
+            } else {
+                showToast('Failed to remove friend');
+            }
+        } catch (error) {
+            showToast('Failed to remove friend');
+        } finally {
+            setUnfriending(null);
+        }
+    };
+
     return (
         <div className="max-w-7xl w-full mx-auto mt-6 bg-white rounded-xl shadow-lg overflow-hidden">
             {(loadingProfile || loadingCover || loadingBio || loadingInfo) && <LoaderOverlay />}
@@ -322,13 +354,42 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
                     </div>
                 )}
                 {tab === 'friends' && (
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {user.friends.map(friend => (
-                            <div key={friend.id} className="flex flex-col items-center bg-white rounded-lg shadow p-4 border">
-                                <img src={friend.profilePic} alt={friend.name} className="w-16 h-16 rounded-full object-cover mb-2" />
-                                <div className="font-medium text-gray-800">{friend.name}</div>
+                    <div className="space-y-4">
+                        {user.friends.length === 0 ? (
+                            <div className="text-center py-8 text-gray-500">
+                                <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                                <p>No friends yet</p>
                             </div>
-                        ))}
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {user.friends.map(friend => (
+                                    <div key={friend.id} className="flex flex-col items-center bg-white rounded-lg shadow p-4 border">
+                                        <Link href={`/settings/profile/${friend.id}`} className="flex flex-col items-center">
+                                            <img src={friend.profilePic} alt={friend.name} className="w-16 h-16 rounded-full object-cover mb-2" />
+                                            <div className="font-medium text-gray-800 text-center mb-2 hover:text-blue-600 transition-colors">{friend.name}</div>
+                                        </Link>
+                                        {isOwnProfile && (
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => handleUnfriend(friend.friendship_id, friend.name)}
+                                                disabled={unfriending === friend.friendship_id}
+                                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                            >
+                                                {unfriending === friend.friendship_id ? (
+                                                    <>
+                                                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-red-600 mr-2"></div>
+                                                        Removing...
+                                                    </>
+                                                ) : (
+                                                    'Unfriend'
+                                                )}
+                                            </Button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
                 {tab === 'info' && (
@@ -390,13 +451,25 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
                     </div>
                 )}
                 {tab === 'groups' && (
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {user.groups.map(group => (
-                            <div key={group.id} className="flex flex-col items-center bg-white rounded-lg shadow p-4 border">
-                                <img src={group.cover} alt={group.name} className="w-full h-20 object-cover rounded mb-2" />
-                                <div className="font-medium text-gray-800">{group.name}</div>
+                    <div className="space-y-4">
+                        {user.groups.length === 0 ? (
+                            <div className="text-center py-8 text-gray-500">
+                                <UserCircle2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                                <p>No groups joined yet</p>
                             </div>
-                        ))}
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {user.groups.map(group => (
+                                    <div key={group.id} className="flex flex-col bg-white rounded-lg shadow p-4 border">
+                                        <Link href={`/groups/${group.id}`} className="flex flex-col">
+                                            <img src={group.cover} alt={group.name} className="w-full h-20 object-cover rounded mb-2" />
+                                            <div className="font-medium text-gray-800 text-center mb-1 hover:text-blue-600 transition-colors">{group.name}</div>
+                                            <div className="text-sm text-gray-500 text-center">{group.members_count} members</div>
+                                        </Link>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

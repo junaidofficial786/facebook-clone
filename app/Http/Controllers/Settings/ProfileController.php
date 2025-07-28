@@ -29,7 +29,43 @@ class ProfileController extends Controller
             $isOwnProfile = true;
         }
 
-        // Placeholder: Add friends, groups, posts, coverPhoto, profilePic, bio, etc.
+        // Load friends (accepted friendships)
+        $friends = \App\Models\Friendship::where(function ($query) use ($user) {
+            $query->where('user_id', $user->id)
+                  ->where('status', 'accepted');
+        })->orWhere(function ($query) use ($user) {
+            $query->where('friend_id', $user->id)
+                  ->where('status', 'accepted');
+        })->with(['user:id,name,profile_pic', 'friend:id,name,profile_pic'])
+        ->get()
+        ->map(function ($friendship) use ($user) {
+            // Determine which user is the friend (not the current user)
+            $friend = $friendship->user_id === $user->id ? $friendship->friend : $friendship->user;
+            return [
+                'id' => $friend->id,
+                'name' => $friend->name,
+                'profilePic' => $friend->profile_pic ? url($friend->profile_pic) : self::profileImagePlaceholder(),
+                'friendship_id' => $friendship->id,
+            ];
+        });
+
+        // Load joined groups
+        $groups = \App\Models\Group::whereHas('groupMembers', function ($query) use ($user) {
+            $query->where('user_id', $user->id)
+                  ->where('status', 'accepted');
+        })->with(['groupMembers' => function ($query) use ($user) {
+            $query->where('user_id', $user->id);
+        }])
+        ->get()
+        ->map(function ($group) {
+            return [
+                'id' => $group->id,
+                'name' => $group->name,
+                'cover' => $group->cover_pic ? url($group->cover_pic) : 'https://via.placeholder.com/300x200?text=Group+Cover',
+                'members_count' => $group->groupMembers()->count(),
+            ];
+        });
+
         $userData = [
             'name' => $user->name,
             'coverPhoto' => $user->cover_pic ? url($user->cover_pic) : self::coverImagePlaceholder(),
@@ -39,8 +75,8 @@ class ProfileController extends Controller
             'gender' => $user->gender ?? '',
             'birthday' => $user->birthday ?? '',
             'location' => $user->location ?? '',
-            'friends' => [], // TODO: Load real friends
-            'groups' => [], // TODO: Load real groups
+            'friends' => $friends,
+            'groups' => $groups,
             'posts' => [], // TODO: Load real posts
         ];
 
@@ -99,6 +135,33 @@ class ProfileController extends Controller
             'success' => true,
             'url' => url($user->profile_pic ?? $user->cover_pic),
         ]);
+    }
+
+    /**
+     * Unfriend a user.
+     */
+    public function unfriend(Request $request)
+    {
+        $request->validate([
+            'friendship_id' => 'required|exists:friendships,id'
+        ]);
+
+        $user = $request->user();
+        $friendship = \App\Models\Friendship::where('id', $request->friendship_id)
+            ->where(function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                      ->orWhere('friend_id', $user->id);
+            })
+            ->where('status', 'accepted')
+            ->first();
+
+        if (!$friendship) {
+            return response()->json(['success' => false, 'message' => 'Friendship not found'], 404);
+        }
+
+        $friendship->delete();
+
+        return response()->json(['success' => true, 'message' => 'Friend removed successfully']);
     }
 
     /**
