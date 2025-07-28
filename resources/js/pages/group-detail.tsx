@@ -4,6 +4,8 @@ import { useForm } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useToast } from '@/components/ui/toast';
+import axios from 'axios';
 
 interface GroupDetailProps {
   group: {
@@ -12,6 +14,9 @@ interface GroupDetailProps {
     cover?: string | null;
     members_count: number;
     visibility: string;
+    is_member: boolean;
+    membership_status: string | null;
+    is_admin: boolean;
     members: { id: number; name: string; profile_pic: string | null }[];
   };
 }
@@ -21,6 +26,8 @@ export default function GroupDetail({ group }: GroupDetailProps) {
   const [preview, setPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [membersOpen, setMembersOpen] = useState(false);
+  const [joining, setJoining] = useState(false);
+  const { show: showToast } = useToast();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
@@ -46,6 +53,23 @@ export default function GroupDetail({ group }: GroupDetailProps) {
     });
   };
 
+  const handleJoinGroup = async () => {
+    setJoining(true);
+    try {
+      const response = await axios.post(`/groups/${group.id}/join`);
+      if (response.data.success) {
+        showToast('Successfully joined the group');
+        window.location.reload(); // Refresh to update the UI
+      } else {
+        showToast(response.data.message || 'Failed to join group');
+      }
+    } catch (error) {
+      showToast('Failed to join group');
+    } finally {
+      setJoining(false);
+    }
+  };
+
   return (
     <AppShell>
       <div className="max-w-7xl w-full mx-auto mt-6 bg-white rounded-xl shadow-lg overflow-hidden">
@@ -56,24 +80,26 @@ export default function GroupDetail({ group }: GroupDetailProps) {
             alt="Group Cover"
             className="w-full h-full object-cover"
           />
-          {/* Show upload button for admin (for now, show for all users) */}
-          <form onSubmit={handleUpload} className="absolute top-4 right-4 flex gap-2 items-center bg-white/80 p-2 rounded shadow">
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-            />
-            <Button type="button" variant="secondary" size="sm" onClick={() => fileInputRef.current?.click()} disabled={processing}>
-              {preview ? 'Change' : 'Upload Cover'}
-            </Button>
-            {preview && (
-              <Button type="submit" variant="primary" size="sm" disabled={processing}>
-                {processing ? 'Saving...' : 'Save'}
+          {/* Show upload button only for admin */}
+          {group.is_admin && (
+            <form onSubmit={handleUpload} className="absolute top-4 right-4 flex gap-2 items-center bg-white/80 p-2 rounded shadow">
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+              />
+              <Button type="button" variant="secondary" size="sm" onClick={() => fileInputRef.current?.click()} disabled={processing}>
+                {preview ? 'Change' : 'Upload Cover'}
               </Button>
-            )}
-          </form>
+              {preview && (
+                <Button type="submit" variant="primary" size="sm" disabled={processing}>
+                  {processing ? 'Saving...' : 'Save'}
+                </Button>
+              )}
+            </form>
+          )}
         {/* End upload UI */}
           <div className="absolute left-8 -bottom-12 flex items-center gap-4">
             <div className="text-3xl font-bold text-gray-900 bg-white px-6 py-2 rounded shadow">
@@ -108,9 +134,44 @@ export default function GroupDetail({ group }: GroupDetailProps) {
             </div>
           </DialogContent>
         </Dialog>
-        {/* Feed */}
+        {/* Feed or Join Button */}
         <div className="px-8 pb-8">
-          <Feed groupId={group.id} groupPrivacy={group.visibility} />
+          {group.is_member ? (
+            <Feed groupId={group.id} groupPrivacy={group.visibility} />
+          ) : (
+            <div className="text-center py-12">
+              <div className="max-w-md mx-auto">
+                <div className="bg-gray-50 rounded-lg p-8 border-2 border-dashed border-gray-300">
+                  <div className="text-gray-500 mb-4">
+                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Join this group</h3>
+                  <p className="text-gray-500 mb-6">
+                    {group.visibility === 'public'
+                      ? 'Join this public group to see posts and interact with members.'
+                      : 'This is a private group. You need to join to see posts and interact with members.'
+                    }
+                  </p>
+                  <Button
+                    onClick={handleJoinGroup}
+                    disabled={joining}
+                    className="w-full"
+                  >
+                    {joining ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Joining...
+                      </>
+                    ) : (
+                      'Join Group'
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </AppShell>

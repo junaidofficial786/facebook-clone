@@ -52,6 +52,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/groups', [GroupController::class, 'store'])->name('groups.store');
     Route::get('/groups/{group}', [GroupController::class, 'show'])->name('groups.show');
     Route::post('/groups/{group}/cover', [GroupController::class, 'updateCover'])->name('groups.cover');
+Route::post('/groups/{group}/join', [GroupController::class, 'joinGroup'])->name('groups.join');
 
     // People routes
     Route::get('/people', [PeopleController::class, 'index'])->name('people');
