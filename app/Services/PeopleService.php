@@ -37,6 +37,7 @@ class PeopleService
                     ->where('friend_id', $user->id);
             })
             ->select('id', 'name', 'profile_pic')
+            ->inRandomOrder()
             ->limit($limit)
             ->get();
     }

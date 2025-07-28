@@ -59,4 +59,17 @@ class PeopleController extends Controller
 
         return response()->json($result, $result['success'] ? 200 : 404);
     }
+
+    public function getSuggestedPeople(Request $request)
+    {
+        $user = Auth::user();
+        $limit = $request->input('limit', 5);
+
+        $suggestedPeople = PeopleService::getSuggestedPeople($user, $limit);
+
+        return response()->json([
+            'success' => true,
+            'data' => $suggestedPeople
+        ]);
+    }
 }
