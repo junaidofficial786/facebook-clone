@@ -283,7 +283,7 @@ export default function GroupDetail({ group }: GroupDetailProps) {
                 {/* Feed or Join Button */}
         <div className="px-8 pb-8">
           {group.is_member ? (
-            <Feed groupId={group.id} groupPrivacy={group.visibility} />
+            <Feed groupId={group.id} groupPrivacy={group.visibility} isGroupMember={true} membershipStatus={group.membership_status} />
           ) : group.membership_status === 'pending' ? (
             <div className="text-center py-12">
               <div className="max-w-md mx-auto">

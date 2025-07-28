@@ -69,7 +69,7 @@ function buildCommentTree(comments: any[]) {
 }
 
 // Recursive comment tree renderer
-function CommentTree({ comments, postId, allUsers, ...props }: { comments: any[], postId: number, allUsers: any[], replyingTo: number | null, setReplyingTo: (id: number | null) => void, replyInputs: { [commentId: number]: string }, handleReplyInputChange: (commentId: number, value: string) => void, handleReplySubmit: (postId: number, parentCommentId: number) => void, reactions: { id: number, name: string, icon: string }[], handleCommentReact: (commentId: number, reactionId: number, currentReactionId?: number) => void, reactingPostId: number | null, hoveredCommentId: number | null, handleCommentMouseEnter: (commentId: number) => void, handleCommentMouseLeave: () => void, openReactionDialog: { postId?: number, commentId?: number, reactionId: number } | null, closeReactionDialog: () => void, loadingReactionUsers: boolean, reactionUsers: any[], handleEmojiClick: (postId: number | undefined, reactionId: number, commentId?: number) => void, handleDeleteComment: (commentId: number) => void, deletingComment: boolean, deleteCommentId: number | null, currentUserId: number | undefined, submittingReply: number | null }) {
+function CommentTree({ comments, postId, allUsers, isGroupMember, groupId, ...props }: { comments: any[], postId: number, allUsers: any[], isGroupMember?: boolean, groupId?: number, replyingTo: number | null, setReplyingTo: (id: number | null) => void, replyInputs: { [commentId: number]: string }, handleReplyInputChange: (commentId: number, value: string) => void, handleReplySubmit: (postId: number, parentCommentId: number) => void, reactions: { id: number, name: string, icon: string }[], handleCommentReact: (commentId: number, reactionId: number, currentReactionId?: number) => void, reactingPostId: number | null, hoveredCommentId: number | null, handleCommentMouseEnter: (commentId: number) => void, handleCommentMouseLeave: () => void, openReactionDialog: { postId?: number, commentId?: number, reactionId: number } | null, closeReactionDialog: () => void, loadingReactionUsers: boolean, reactionUsers: any[], handleEmojiClick: (postId: number | undefined, reactionId: number, commentId?: number) => void, handleDeleteComment: (commentId: number) => void, deletingComment: boolean, deleteCommentId: number | null, currentUserId: number | undefined, submittingReply: number | null }) {
     // Define the delayed hover handlers inside CommentTree so they are in scope
     const commentLikeHoverTimeout = useRef<{ [commentId: number]: NodeJS.Timeout | null }>({});
     const [localHoveredCommentId, setLocalHoveredCommentId] = useState<number | null>(null);
@@ -110,11 +110,15 @@ function CommentTree({ comments, postId, allUsers, ...props }: { comments: any[]
                                     {props.reactions.map(r => (
                                         <button
                                             key={r.id}
-                                            className={`text-xl hover:scale-125 transition-transform duration-100${comment.my_reaction && comment.my_reaction.name === r.name ? ' ring-2 ring-blue-400' : ''}`}
+                                            className={`text-xl transition-transform duration-100${comment.my_reaction && comment.my_reaction.name === r.name ? ' ring-2 ring-blue-400' : ''} ${groupId && !isGroupMember ? 'opacity-50 cursor-not-allowed' : 'hover:scale-125'}`}
                                             title={r.name}
-                                            onClick={() => props.handleCommentReact(comment.id, r.id, comment.my_reaction?.name === r.name ? r.id : undefined)}
+                                            onClick={() => {
+                                                if (!groupId || isGroupMember) {
+                                                    props.handleCommentReact(comment.id, r.id, comment.my_reaction?.name === r.name ? r.id : undefined);
+                                                }
+                                            }}
                                             type="button"
-                                            disabled={props.reactingPostId === comment.id}
+                                            disabled={props.reactingPostId === comment.id || (!!groupId && !isGroupMember)}
                                         >
                                             {r.icon}
                                         </button>
@@ -124,9 +128,13 @@ function CommentTree({ comments, postId, allUsers, ...props }: { comments: any[]
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className={`px-2 py-0.5 text-xs h-7 cursor-pointer ${comment.liked_by_me ? 'text-blue-600' : ''}`}
-                                onClick={() => comment.liked_by_me ? props.handleCommentReact(comment.id, comment.my_reaction?.id, comment.my_reaction?.id) : props.handleCommentReact(comment.id, props.reactions.find(r => r.name === 'Like')?.id || props.reactions[0]?.id)}
-                                disabled={props.reactingPostId === comment.id}
+                                className={`px-2 py-0.5 text-xs h-7 ${comment.liked_by_me ? 'text-blue-600' : ''} ${groupId && !isGroupMember ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                                onClick={() => {
+                                    if (!groupId || isGroupMember) {
+                                        comment.liked_by_me ? props.handleCommentReact(comment.id, comment.my_reaction?.id, comment.my_reaction?.id) : props.handleCommentReact(comment.id, props.reactions.find(r => r.name === 'Like')?.id || props.reactions[0]?.id);
+                                    }
+                                }}
+                                disabled={props.reactingPostId === comment.id || (!!groupId && !isGroupMember)}
                             >
                                 {comment.my_reaction && comment.my_reaction.icon ? (
                                     <span className="text-lg">{comment.my_reaction.icon}</span>
@@ -173,8 +181,13 @@ function CommentTree({ comments, postId, allUsers, ...props }: { comments: any[]
                         <Button
                             variant="ghost"
                             size="sm"
-                            className="px-2 py-0.5 text-xs h-7 cursor-pointer"
-                            onClick={() => props.setReplyingTo(props.replyingTo === comment.id ? null : comment.id)}
+                            className={`px-2 py-0.5 text-xs h-7 ${groupId && !isGroupMember ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                            onClick={() => {
+                                if (!groupId || isGroupMember) {
+                                    props.setReplyingTo(props.replyingTo === comment.id ? null : comment.id);
+                                }
+                            }}
+                            disabled={!!groupId && !isGroupMember}
                         >
                             Reply
                         </Button>
@@ -194,12 +207,17 @@ function CommentTree({ comments, postId, allUsers, ...props }: { comments: any[]
                 {props.replyingTo === comment.id && (
                     <div className="mt-2 flex gap-2">
                         <Input
-                            placeholder={`Reply to ${comment.user?.name}...`}
-                            className="h-8 text-sm"
+                            placeholder={groupId && !isGroupMember ? "Join the group to reply" : `Reply to ${comment.user?.name}...`}
+                            className={`h-8 text-sm ${groupId && !isGroupMember ? 'opacity-50 cursor-not-allowed' : ''}`}
                             value={props.replyInputs[comment.id] || ''}
-                            onChange={e => props.handleReplyInputChange(comment.id, e.target.value)}
+                            disabled={!!groupId && !isGroupMember}
+                            onChange={e => {
+                                if (!groupId || isGroupMember) {
+                                    props.handleReplyInputChange(comment.id, e.target.value);
+                                }
+                            }}
                             onKeyDown={e => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
+                                if ((!groupId || isGroupMember) && e.key === 'Enter' && !e.shiftKey) {
                                     e.preventDefault();
                                     props.handleReplySubmit(postId, comment.id);
                                 }
@@ -207,9 +225,13 @@ function CommentTree({ comments, postId, allUsers, ...props }: { comments: any[]
                         />
                         <Button
                             variant="default"
-                            onClick={() => props.handleReplySubmit(postId, comment.id)}
-                            disabled={!(props.replyInputs[comment.id] && props.replyInputs[comment.id].trim()) || props.submittingReply === comment.id}
-                            className="h-8"
+                            onClick={() => {
+                                if (!groupId || isGroupMember) {
+                                    props.handleReplySubmit(postId, comment.id);
+                                }
+                            }}
+                            disabled={!(props.replyInputs[comment.id] && props.replyInputs[comment.id].trim()) || props.submittingReply === comment.id || (!!groupId && !isGroupMember)}
+                            className={`h-8 ${groupId && !isGroupMember ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                             {props.submittingReply === comment.id ? (
                                 <>
@@ -232,9 +254,9 @@ function CommentTree({ comments, postId, allUsers, ...props }: { comments: any[]
 }
 
 // Update Feed props
-type FeedProps = { user_id?: number, groupId?: number, showCreatePost?: boolean, groupPrivacy?: string };
+type FeedProps = { user_id?: number, groupId?: number, showCreatePost?: boolean, groupPrivacy?: string, isGroupMember?: boolean, membershipStatus?: string | null };
 
-export default function Feed({ user_id, groupId, showCreatePost = true, groupPrivacy }: FeedProps) {
+export default function Feed({ user_id, groupId, showCreatePost = true, groupPrivacy, isGroupMember, membershipStatus }: FeedProps) {
     const [editorValue, setEditorValue] = useState('');
     const { auth } = usePage().props as any;
     const currentUserId = auth?.user?.id;
@@ -630,9 +652,10 @@ export default function Feed({ user_id, groupId, showCreatePost = true, groupPri
             {deleting && <LoaderOverlay />}
             {showToast && <Toast message={toastMessage} onClose={() => setShowToast(false)} />}
             <div ref={feedContainerRef} className="flex flex-col gap-6 h-full min-h-0 max-h-screen overflow-y-auto feed-scroll">
-                {showCreatePost && (
+                {showCreatePost && (!groupId || isGroupMember) && (
                     <CreatePost onPostCreated={fetchPosts} groupId={groupId} groupPrivacy={groupPrivacy} />
                 )}
+
 
                 {/* Skeleton Placeholder */}
                 {posts === null ? (
@@ -992,11 +1015,15 @@ export default function Feed({ user_id, groupId, showCreatePost = true, groupPri
                                             {reactions.map(r => (
                                                 <button
                                                     key={r.id}
-                                                    className={`text-xl hover:scale-125 transition-transform duration-100${post.my_reaction && post.my_reaction.name === r.name ? ' ring-2 ring-blue-400' : ''}`}
+                                                    className={`text-xl transition-transform duration-100${post.my_reaction && post.my_reaction.name === r.name ? ' ring-2 ring-blue-400' : ''} ${groupId && !isGroupMember ? 'opacity-50 cursor-not-allowed' : 'hover:scale-125'}`}
                                                     title={r.name}
-                                                    onClick={() => handleReact(post.id, r.id, post.my_reaction?.name === r.name ? r.id : undefined)}
+                                                    onClick={() => {
+                                                        if (!groupId || isGroupMember) {
+                                                            handleReact(post.id, r.id, post.my_reaction?.name === r.name ? r.id : undefined);
+                                                        }
+                                                    }}
                                                     type="button"
-                                                    disabled={reactingPostId === post.id}
+                                                    disabled={reactingPostId === post.id || (!!groupId && !isGroupMember)}
                                                 >
                                                     {r.icon}
                                                 </button>
@@ -1006,9 +1033,13 @@ export default function Feed({ user_id, groupId, showCreatePost = true, groupPri
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        className={`flex items-center gap-1 cursor-pointer ${post.liked_by_me ? 'text-blue-600' : ''}`}
-                                        onClick={() => post.liked_by_me ? handleUnreact(post.id) : handleReact(post.id, reactions.find(r => r.name === 'Like')?.id || reactions[0]?.id)}
-                                        disabled={reactingPostId === post.id}
+                                        className={`flex items-center gap-1 ${post.liked_by_me ? 'text-blue-600' : ''} ${groupId && !isGroupMember ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                                        onClick={() => {
+                                            if (!groupId || isGroupMember) {
+                                                post.liked_by_me ? handleUnreact(post.id) : handleReact(post.id, reactions.find(r => r.name === 'Like')?.id || reactions[0]?.id);
+                                            }
+                                        }}
+                                        disabled={reactingPostId === post.id || (!!groupId && !isGroupMember)}
                                     >
                                         {post.my_reaction && post.my_reaction.icon ? (
                                             <span className="text-xl">{post.my_reaction.icon}</span>
@@ -1075,6 +1106,8 @@ export default function Feed({ user_id, groupId, showCreatePost = true, groupPri
                                         comments={buildCommentTree(post.comments || [])}
                                         postId={post.id}
                                         allUsers={allUsers}
+                                        isGroupMember={isGroupMember}
+                                        groupId={groupId}
                                         replyingTo={replyingTo}
                                         setReplyingTo={setReplyingTo}
                                         replyInputs={replyInputs}
@@ -1102,16 +1135,23 @@ export default function Feed({ user_id, groupId, showCreatePost = true, groupPri
                                     <div className="relative w-full">
                                         <input
                                             ref={el => { inputRefs.current[post.id] = el; }}
-                                            className="w-full border-input file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"
-                                            placeholder="Write a comment..."
+                                            className={`w-full border-input file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive ${groupId && !isGroupMember ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            placeholder={groupId && !isGroupMember ? "Join the group to comment" : "Write a comment..."}
                                             value={commentInputs[post.id] || ''}
                                             maxLength={100}
-                                            onChange={e => handleCommentInputChangeWithMention(post.id, e.target.value, e)}
+                                            disabled={!!groupId && !isGroupMember}
+                                            onChange={e => {
+                                                if (!groupId || isGroupMember) {
+                                                    handleCommentInputChangeWithMention(post.id, e.target.value, e);
+                                                }
+                                            }}
                                             onKeyDown={e => {
-                                                handleMentionKeyDown(e);
-                                                if (e.key === 'Enter' && !mentionDropdown && !e.shiftKey) {
-                                                    e.preventDefault();
-                                                    handleCommentSubmit(post.id);
+                                                if (!groupId || isGroupMember) {
+                                                    handleMentionKeyDown(e);
+                                                    if (e.key === 'Enter' && !mentionDropdown && !e.shiftKey) {
+                                                        e.preventDefault();
+                                                        handleCommentSubmit(post.id);
+                                                    }
                                                 }
                                             }}
                                         />
@@ -1142,9 +1182,13 @@ export default function Feed({ user_id, groupId, showCreatePost = true, groupPri
                                     </div>
                                     <Button
                                         variant="default"
-                                        onClick={() => handleCommentSubmit(post.id)}
-                                        disabled={!(commentInputs[post.id] && commentInputs[post.id].trim()) || submittingComment === post.id}
-                                        className="h-9"
+                                        onClick={() => {
+                                            if (!groupId || isGroupMember) {
+                                                handleCommentSubmit(post.id);
+                                            }
+                                        }}
+                                        disabled={!(commentInputs[post.id] && commentInputs[post.id].trim()) || submittingComment === post.id || (!!groupId && !isGroupMember)}
+                                        className={`h-9 ${groupId && !isGroupMember ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     >
                                         {submittingComment === post.id ? (
                                             <>
