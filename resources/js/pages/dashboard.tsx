@@ -1,7 +1,5 @@
 import AppHeaderLayout from '@/layouts/app/app-header-layout';
-import LeftColumn from '@/components/dashboard/left-column';
 import Feed from '@/components/dashboard/feed';
-import RightColumn from '@/components/dashboard/right-column';
 
 function Dashboard() {
 
@@ -27,23 +25,9 @@ function Dashboard() {
 
 
     return (
-        <div className="flex w-full gap-12 px-6 min-h-0">
-            <div className="hidden lg:block w-1/4">
-                <div className="sticky top-24">
-                    <LeftColumn />
-                </div>
-            </div>
-            <div className="flex-1 min-w-0 flex flex-col">
-                <div className="flex-1">
-                    <Feed/>
-                    {/* <Feed user_id={100} groupId={4} /> */}
-                </div>
-            </div>
-            <div className="hidden xl:block w-1/4">
-                <div className="sticky top-24">
-                    <RightColumn />
-                </div>
-            </div>
+        <div className="flex-1">
+            <Feed/>
+            {/* <Feed user_id={100} groupId={4} /> */}
         </div>
     );
 }
