@@ -4,23 +4,10 @@ import { AppShell } from '@/components/app-shell';
 import { type BreadcrumbItem } from '@/types';
 import type { PropsWithChildren } from 'react';
 
-export default function AppHeaderLayout({ children, breadcrumbs }: PropsWithChildren<{ breadcrumbs?: BreadcrumbItem[] }>) {
-
-    Echo.join('online-users')
-    .here((users) => {
-        console.log("Currently online:", users);
-        // users = array of users with email included
-    })
-    .joining((user) => {
-        console.log(`${user.name} (${user.email}) just came online.`);
-    })
-    .leaving((user) => {
-        console.log(`${user.name} (${user.email}) just went offline.`);
-    });
-
+export default function AppHeaderLayout({ children }: PropsWithChildren<{ breadcrumbs?: BreadcrumbItem[] }>) {
     return (
         <AppShell>
-            <AppHeader breadcrumbs={breadcrumbs} />
+            <AppHeader />
             <AppContent>{children}</AppContent>
         </AppShell>
     );
