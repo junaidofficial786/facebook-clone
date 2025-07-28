@@ -89,26 +89,5 @@ Route::get('/event', function () {
     dd('ok');
 });
 
-Route::get('/add-friends', function () {
-    for ($i = 0; $i < 100; $i++) {
-
-        $rand1 = rand(1, 100);
-        $rand2 = rand(1, 100);
-        $already = Friendship::where('user_id', $rand1)->where('friend_id', $rand2)->first();
-        if ($already) {
-            continue;
-        }
-
-        Friendship::create([
-            'user_id' => $rand1,
-            'friend_id' => $rand2,
-            'status' => 'accepted',
-            'responded_at' => now(),
-        ]);
-
-    }
-    dd('ok');
-});
-
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
