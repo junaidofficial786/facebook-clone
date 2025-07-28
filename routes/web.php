@@ -42,8 +42,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 'members' => $group->group_members_count,
             ];
         });
+
+        // Get groups that user hasn't joined (not a member and no pending request)
+        $moreGroups = \App\Models\Group::whereDoesntHave('groupMembers', function($q) use ($user) {
+            $q->where('user_id', $user->id);
+        })
+        ->withCount('groupMembers')
+        ->inRandomOrder()
+        ->limit(10)
+        ->get(['id', 'name'])
+        ->map(function($group) {
+            return [
+                'id' => $group->id,
+                'name' => $group->name,
+                'members' => $group->group_members_count,
+            ];
+        });
+
         return Inertia::render('groups', [
             'joinedGroups' => $joinedGroups,
+            'moreGroups' => $moreGroups,
         ]);
     })->name('groups');
     Route::get('/groups/create', function () {
