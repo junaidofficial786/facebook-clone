@@ -34,6 +34,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('groups.create');
     Route::post('/groups', [GroupController::class, 'store'])->name('groups.store');
     Route::get('/groups/{group}', [GroupController::class, 'show'])->name('groups.show');
+    Route::post('/groups/{group}/cover', [GroupController::class, 'updateCover'])->name('groups.cover');
 });
 
 //an revern event that throws event for testing

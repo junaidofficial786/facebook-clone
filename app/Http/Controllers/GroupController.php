@@ -36,4 +36,17 @@ class GroupController extends Controller
             'group' => $groupData,
         ]);
     }
+
+    public function updateCover(Request $request, $groupId)
+    {
+        $request->validate([
+            'cover' => 'required|image|mimes:jpeg,png,jpg,gif|max:5120', // 5MB max
+        ]);
+        $group = \App\Models\Group::findOrFail($groupId);
+        // Optionally: check if user is admin of the group
+        $path = $request->file('cover')->store('group-covers', 'public');
+        $group->cover_pic = 'storage/' . $path;
+        $group->save();
+        return back()->with('success', 'Group cover updated successfully!');
+    }
 }

@@ -16,4 +16,9 @@ class Group extends Model
     public function groupMembers() { return $this->hasMany(GroupMember::class); }
     public function groupPosts() { return $this->hasMany(GroupPost::class); }
     public function creator() { return $this->belongsTo(User::class, 'created_by'); }
+
+    public function getCoverAttribute()
+    {
+        return $this->cover_pic ? url($this->cover_pic) : null;
+    }
 }
