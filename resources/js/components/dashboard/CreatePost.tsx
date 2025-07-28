@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Image as ImageIcon, FileVideo } from 'lucide-react';
@@ -9,15 +9,22 @@ import LoaderOverlay from '@/components/ui/loader';
 interface CreatePostProps {
     onPostCreated?: () => void;
     groupId?: number;
+    groupPrivacy?: string;
 }
 
-export default function CreatePost({ onPostCreated, groupId }: CreatePostProps) {
+export default function CreatePost({ onPostCreated, groupId, groupPrivacy }: CreatePostProps) {
     const [editorValue, setEditorValue] = useState('');
     const [media, setMedia] = useState<File[]>([]);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const { show: showToast } = useToast();
-    const [privacy, setPrivacy] = useState('public');
+    const [privacy, setPrivacy] = useState(groupPrivacy || 'public');
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (groupId && groupPrivacy) {
+            setPrivacy(groupPrivacy);
+        }
+    }, [groupId, groupPrivacy]);
 
     const csrfToken = (typeof document !== 'undefined' && document.querySelector('meta[name="csrf-token"]'))
         ? (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement).content
@@ -32,7 +39,7 @@ export default function CreatePost({ onPostCreated, groupId }: CreatePostProps) 
         setLoading(true);
         const formData = new FormData();
         formData.append('content', editorValue);
-        formData.append('privacy', privacy);
+        formData.append('privacy', groupId && groupPrivacy ? groupPrivacy : privacy);
         if (groupId) {
             formData.append('group_id', String(groupId));
         }
@@ -99,23 +106,26 @@ export default function CreatePost({ onPostCreated, groupId }: CreatePostProps) 
                         </div>
                     )}
                     <div className="flex gap-2 mb-4 items-center justify-start">
-                        <Select value={privacy} onValueChange={setPrivacy}>
-                            <SelectTrigger className="w-36 border-black focus:ring-2 focus:ring-black/40">
-                                <SelectValue placeholder="Privacy" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="public">
-                                    <span className="text-black font-medium">Public</span>
-                                </SelectItem>
-                                <SelectItem value="friends">
-                                    <span className="text-black font-medium">Friends</span>
-                                </SelectItem>
-                                <SelectItem value="private">
-                                    <span className="text-black font-medium">Private</span>
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <input type="hidden" name="privacy" value={privacy} />
+                        {/* Privacy dropdown only if not in group */}
+                        {!groupId && (
+                            <Select value={privacy} onValueChange={setPrivacy}>
+                                <SelectTrigger className="w-36 border-black focus:ring-2 focus:ring-black/40">
+                                    <SelectValue placeholder="Privacy" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="public">
+                                        <span className="text-black font-medium">Public</span>
+                                    </SelectItem>
+                                    <SelectItem value="friends">
+                                        <span className="text-black font-medium">Friends</span>
+                                    </SelectItem>
+                                    <SelectItem value="private">
+                                        <span className="text-black font-medium">Private</span>
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                        )}
+                        <input type="hidden" name="privacy" value={groupId && groupPrivacy ? groupPrivacy : privacy} />
                         <label className="inline-flex items-center gap-2 cursor-pointer border border-black text-black font-semibold rounded-lg px-3 py-1.5 bg-transparent hover:bg-gray-100 transition-colors focus:ring-2 focus:ring-black/20">
                             <ImageIcon className="h-5 w-5 text-black" />
                             <span className="text-sm font-semibold">Photo</span>

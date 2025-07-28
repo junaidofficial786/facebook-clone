@@ -10,6 +10,7 @@ interface GroupDetailProps {
     name: string;
     cover?: string | null;
     members_count: number;
+    visibility: string; // Added visibility to the interface
   };
 }
 
@@ -85,7 +86,7 @@ export default function GroupDetail({ group }: GroupDetailProps) {
         </div>
         {/* Feed */}
         <div className="px-8 pb-8">
-          <Feed groupId={group.id} />
+          <Feed groupId={group.id} groupPrivacy={group.visibility} />
         </div>
       </div>
     </AppShell>

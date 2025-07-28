@@ -31,6 +31,7 @@ class GroupController extends Controller
             'name' => $group->name,
             'cover' => $group->cover ?? null, // add cover logic if exists
             'members_count' => $group->group_members_count,
+            'visibility' => $group->visibility,
         ];
         return \Inertia\Inertia::render('group-detail', [
             'group' => $groupData,
