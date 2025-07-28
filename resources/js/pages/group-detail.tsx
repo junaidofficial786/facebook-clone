@@ -281,7 +281,7 @@ export default function GroupDetail({ group }: GroupDetailProps) {
           </DialogContent>
         </Dialog>
                 {/* Feed or Join Button */}
-        <div className="px-8 pb-8">
+        <div className="px-8 pb-8 h-[calc(100vh-400px)] overflow-y-auto">
           {group.is_member ? (
             <Feed groupId={group.id} groupPrivacy={group.visibility} isGroupMember={true} membershipStatus={group.membership_status} />
           ) : group.membership_status === 'pending' ? (

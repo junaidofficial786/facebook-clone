@@ -651,7 +651,7 @@ export default function Feed({ user_id, groupId, showCreatePost = true, groupPri
         <>
             {deleting && <LoaderOverlay />}
             {showToast && <Toast message={toastMessage} onClose={() => setShowToast(false)} />}
-            <div ref={feedContainerRef} className="flex flex-col gap-6 h-full min-h-0 max-h-screen overflow-y-auto feed-scroll">
+            <div ref={feedContainerRef} className="flex flex-col gap-6 overflow-y-auto feed-scroll">
                 {showCreatePost && (!groupId || isGroupMember) && (
                     <CreatePost onPostCreated={fetchPosts} groupId={groupId} groupPrivacy={groupPrivacy} />
                 )}
