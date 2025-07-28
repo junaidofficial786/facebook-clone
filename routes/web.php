@@ -53,6 +53,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/groups/{group}', [GroupController::class, 'show'])->name('groups.show');
     Route::post('/groups/{group}/cover', [GroupController::class, 'updateCover'])->name('groups.cover');
 Route::post('/groups/{group}/join', [GroupController::class, 'joinGroup'])->name('groups.join');
+Route::get('/groups/{group}/pending-requests', [GroupController::class, 'getPendingRequests'])->name('groups.pending-requests');
+Route::post('/groups/{group}/approve-request', [GroupController::class, 'approveRequest'])->name('groups.approve-request');
+Route::post('/groups/{group}/reject-request', [GroupController::class, 'rejectRequest'])->name('groups.reject-request');
 
     // People routes
     Route::get('/people', [PeopleController::class, 'index'])->name('people');
