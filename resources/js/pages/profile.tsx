@@ -376,12 +376,12 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
                     </>
                 )}
                 {/* Profile Pic and Name */}
-                <div className="absolute left-8 -bottom-16 flex items-center">
+                <div className="absolute left-8 -bottom-20 flex items-end">
                     <div className="relative">
-                        <img src={profilePreview || user.profilePic} alt="Profile" className="w-36 h-36 rounded-full border-4 border-white shadow-lg object-cover bg-white" />
+                        <img src={profilePreview || user.profilePic} alt="Profile" className="w-40 h-40 rounded-full border-4 border-white shadow-xl object-cover bg-white" />
                         {isOwnProfile && (
                             <>
-                                <button className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-full p-1.5" title="Edit profile picture" onClick={handleProfileEdit}>
+                                <button className="absolute bottom-3 right-3 bg-black/70 hover:bg-black/90 text-white rounded-full p-2 transition-all duration-200" title="Edit profile picture" onClick={handleProfileEdit}>
                                     <Pencil className="w-4 h-4" />
                                 </button>
                                 <input
@@ -392,163 +392,206 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
                                     onChange={handleProfileChange}
                                 />
                                 {profilePreview && (
-                                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-                                        <button className="bg-green-600 hover:bg-green-700 text-white rounded-full p-2 shadow" onClick={handleProfileSave} title="Save profile photo"><Check className="w-5 h-5" /></button>
-                                        <button className="bg-red-600 hover:bg-red-700 text-white rounded-full p-2 shadow" onClick={handleProfileCancel} title="Cancel"><X className="w-5 h-5" /></button>
+                                    <div className="absolute -top-12 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                                        <button className="bg-green-600 hover:bg-green-700 text-white rounded-full p-2 shadow-lg transition-all duration-200" onClick={handleProfileSave} title="Save profile photo"><Check className="w-5 h-5" /></button>
+                                        <button className="bg-red-600 hover:bg-red-700 text-white rounded-full p-2 shadow-lg transition-all duration-200" onClick={handleProfileCancel} title="Cancel"><X className="w-5 h-5" /></button>
                                     </div>
                                 )}
                             </>
                         )}
                     </div>
-                    <div className="ml-6">
-                        <div className="text-2xl mt-14 font-bold text-gray-900">{user.name}</div>
-                        {/* Friend Button - Only show if not own profile */}
-                        {!isOwnProfile && (
-                            <div className="mt-4">
-                                {currentFriendshipStatus === 'accepted' ? (
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => handleUnfriend(currentFriendshipId!, user.name)}
-                                        disabled={unfriending === currentFriendshipId}
-                                        className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300"
-                                    >
-                                        {unfriending === currentFriendshipId ? (
-                                            <>
-                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600 mr-2"></div>
-                                                Unfriending...
-                                            </>
-                                        ) : (
-                                            'Unfriend'
-                                        )}
-                                    </Button>
-                                ) : currentFriendshipStatus === 'pending' ? (
-                                    currentRequestSentByMe ? (
-                                        // I sent the request - show "Request Sent"
-                                        <Button
-                                            variant="outline"
-                                            disabled
-                                            className="text-gray-500 bg-gray-100 cursor-not-allowed"
-                                        >
-                                            Request Sent
-                                        </Button>
-                                    ) : (
-                                        // I received the request - show Accept/Reject buttons
-                                        <div className="flex gap-2">
-                                            <Button
-                                                variant="default"
-                                                onClick={handleAcceptFriendRequest}
-                                                disabled={acceptingRequest}
-                                                className="bg-green-600 hover:bg-green-700"
-                                            >
-                                                {acceptingRequest ? (
-                                                    <>
-                                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                                        Accepting...
-                                                    </>
-                                                ) : (
-                                                    'Accept Request'
-                                                )}
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                onClick={handleRejectFriendRequest}
-                                                disabled={rejectingRequest}
-                                                className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300"
-                                            >
-                                                {rejectingRequest ? (
-                                                    <>
-                                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600 mr-2"></div>
-                                                        Rejecting...
-                                                    </>
-                                                ) : (
-                                                    'Reject'
-                                                )}
-                                            </Button>
-                                        </div>
-                                    )
-                                ) : (
-                                    <Button
-                                        variant="default"
-                                        onClick={handleSendFriendRequest}
-                                        disabled={sendingRequest}
-                                        className="bg-blue-600 hover:bg-blue-700"
-                                    >
-                                        {sendingRequest ? (
-                                            <>
-                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                                Sending Request...
-                                            </>
-                                        ) : (
-                                            'Add Friend'
-                                        )}
-                                    </Button>
-                                )}
-                            </div>
-                        )}
-                    </div>
                 </div>
             </div>
-            {/* Name, Bio, Edit Bio */}
-            <div className="pt-20 pb-4 px-8 flex flex-col md:flex-row md:items-center md:justify-between border-b">
-                <div>
-                    {/* Name removed from here, only bio and edit bio remain */}
-                    {/* <div className="text-2xl font-bold text-gray-900">{user.name}</div> */}
-                    <div className="flex items-center gap-2 mt-2 text-gray-700">
-                        {editingBio ? (
-                            <>
-                                <textarea
-                                    className="border rounded px-2 py-1 text-sm min-w-[200px] max-w-[400px]"
-                                    value={bioInput}
-                                    onChange={e => setBioInput(e.target.value)}
-                                    maxLength={500}
-                                    rows={2}
-                                />
-                                <Button variant="default" size="sm" className="ml-2" onClick={handleBioSave}>Save</Button>
-                                <Button variant="secondary" size="sm" className="ml-2" onClick={handleBioCancel}>Cancel</Button>
-                            </>
-                        ) : (
-                            <>
-                                <span>{user.bio}</span>
-                                {isOwnProfile && (
-                                    <button className="ml-2 text-blue-600 hover:text-blue-800" title="Edit bio" onClick={handleBioEdit}>
-                                        <Pencil className="w-4 h-4" />
-                                    </button>
-                                )}
-                            </>
-                        )}
+            {/* Name, Bio, and Friend Button Section */}
+            <div className="pt-24 pb-6 px-8 border-b bg-white">
+                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                    <div className="flex-1">
+                        {/* User Name */}
+                        <div className="text-3xl font-bold text-gray-900 mb-3">{user.name}</div>
+
+                        {/* Bio Section */}
+                        <div className="flex items-start gap-2 text-gray-700">
+                            {editingBio ? (
+                                <div className="flex flex-col gap-2 w-full max-w-md">
+                                    <textarea
+                                        className="border rounded-lg px-3 py-2 text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        value={bioInput}
+                                        onChange={e => setBioInput(e.target.value)}
+                                        maxLength={500}
+                                        rows={3}
+                                        placeholder="Write something about yourself..."
+                                    />
+                                    <div className="flex gap-2">
+                                        <Button variant="default" size="sm" onClick={handleBioSave} className="bg-blue-600 hover:bg-blue-700">
+                                            {loadingBio ? (
+                                                <>
+                                                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
+                                                    Saving...
+                                                </>
+                                            ) : (
+                                                'Save'
+                                            )}
+                                        </Button>
+                                        <Button variant="secondary" size="sm" onClick={handleBioCancel}>Cancel</Button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex items-start gap-2">
+                                    <span className="text-gray-700 leading-relaxed">{user.bio || "No bio yet."}</span>
+                                    {isOwnProfile && (
+                                        <button
+                                            className="text-blue-600 hover:text-blue-800 transition-colors duration-200 p-1 rounded-full hover:bg-blue-50"
+                                            title="Edit bio"
+                                            onClick={handleBioEdit}
+                                        >
+                                            <Pencil className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
+
+                    {/* Friend Button - Only show if not own profile */}
+                    {!isOwnProfile && (
+                        <div className="flex-shrink-0">
+                            {currentFriendshipStatus === 'accepted' ? (
+                                <Button
+                                    variant="outline"
+                                    onClick={() => handleUnfriend(currentFriendshipId!, user.name)}
+                                    disabled={unfriending === currentFriendshipId}
+                                    className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300 px-6 py-2"
+                                >
+                                    {unfriending === currentFriendshipId ? (
+                                        <>
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600 mr-2"></div>
+                                            Unfriending...
+                                        </>
+                                    ) : (
+                                        'Unfriend'
+                                    )}
+                                </Button>
+                            ) : currentFriendshipStatus === 'pending' ? (
+                                currentRequestSentByMe ? (
+                                    // I sent the request - show "Request Sent"
+                                    <Button
+                                        variant="outline"
+                                        disabled
+                                        className="text-gray-500 bg-gray-100 cursor-not-allowed px-6 py-2"
+                                    >
+                                        Request Sent
+                                    </Button>
+                                ) : (
+                                    // I received the request - show Accept/Reject buttons
+                                    <div className="flex gap-2">
+                                        <Button
+                                            variant="default"
+                                            onClick={handleAcceptFriendRequest}
+                                            disabled={acceptingRequest}
+                                            className="bg-green-600 hover:bg-green-700 px-6 py-2"
+                                        >
+                                            {acceptingRequest ? (
+                                                <>
+                                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                                    Accepting...
+                                                </>
+                                            ) : (
+                                                'Accept Request'
+                                            )}
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            onClick={handleRejectFriendRequest}
+                                            disabled={rejectingRequest}
+                                            className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300 px-6 py-2"
+                                        >
+                                            {rejectingRequest ? (
+                                                <>
+                                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600 mr-2"></div>
+                                                    Rejecting...
+                                                </>
+                                            ) : (
+                                                'Reject'
+                                            )}
+                                        </Button>
+                                    </div>
+                                )
+                            ) : (
+                                <Button
+                                    variant="default"
+                                    onClick={handleSendFriendRequest}
+                                    disabled={sendingRequest}
+                                    className="bg-blue-600 hover:bg-blue-700 px-6 py-2"
+                                >
+                                    {sendingRequest ? (
+                                        <>
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                            Sending Request...
+                                        </>
+                                    ) : (
+                                        'Add Friend'
+                                    )}
+                                </Button>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
             {/* Tabs */}
-            <div className="px-8 pt-2 bg-white sticky top-0 z-10 border-b">
-                <div className="flex gap-6 text-gray-600 font-semibold text-base">
-                    <button className={`py-3 border-b-2 transition-all ${tab === 'posts' ? 'border-blue-600 text-blue-600' : 'border-transparent'}`} onClick={() => setTab('posts')}><List className="inline w-5 h-5 mr-1" />Posts</button>
-                    <button className={`py-3 border-b-2 transition-all ${tab === 'friends' ? 'border-blue-600 text-blue-600' : 'border-transparent'}`} onClick={() => setTab('friends')}><Users className="inline w-5 h-5 mr-1" />Friends</button>
-                    <button className={`py-3 border-b-2 transition-all ${tab === 'info' ? 'border-blue-600 text-blue-600' : 'border-transparent'}`} onClick={() => setTab('info')}><Info className="inline w-5 h-5 mr-1" />Information</button>
-                    <button className={`py-3 border-b-2 transition-all ${tab === 'groups' ? 'border-blue-600 text-blue-600' : 'border-transparent'}`} onClick={() => setTab('groups')}><UserCircle2 className="inline w-5 h-5 mr-1" />Groups Joined</button>
+            <div className="px-8 pt-4 bg-white sticky top-0 z-10 border-b shadow-sm">
+                <div className="flex gap-8 text-gray-600 font-medium text-base">
+                    <button
+                        className={`py-4 border-b-2 transition-all duration-200 hover:text-blue-600 ${tab === 'posts' ? 'border-blue-600 text-blue-600' : 'border-transparent hover:border-gray-300'}`}
+                        onClick={() => setTab('posts')}
+                    >
+                        <List className="inline w-5 h-5 mr-2" />
+                        Posts
+                    </button>
+                    <button
+                        className={`py-4 border-b-2 transition-all duration-200 hover:text-blue-600 ${tab === 'friends' ? 'border-blue-600 text-blue-600' : 'border-transparent hover:border-gray-300'}`}
+                        onClick={() => setTab('friends')}
+                    >
+                        <Users className="inline w-5 h-5 mr-2" />
+                        Friends
+                    </button>
+                    <button
+                        className={`py-4 border-b-2 transition-all duration-200 hover:text-blue-600 ${tab === 'info' ? 'border-blue-600 text-blue-600' : 'border-transparent hover:border-gray-300'}`}
+                        onClick={() => setTab('info')}
+                    >
+                        <Info className="inline w-5 h-5 mr-2" />
+                        Information
+                    </button>
+                    <button
+                        className={`py-4 border-b-2 transition-all duration-200 hover:text-blue-600 ${tab === 'groups' ? 'border-blue-600 text-blue-600' : 'border-transparent hover:border-gray-300'}`}
+                        onClick={() => setTab('groups')}
+                    >
+                        <UserCircle2 className="inline w-5 h-5 mr-2" />
+                        Groups Joined
+                    </button>
                 </div>
             </div>
             {/* Tab Content */}
-            <div className="px-8 py-6 min-h-[300px] bg-gray-50">
+            <div className="px-8 py-8 min-h-[400px] bg-gray-50">
                 {tab === 'posts' && (
                     <div>
                         <Feed user_id={userIdToShow} showCreatePost={showCreatePost} />
                     </div>
                 )}
                 {tab === 'friends' && (
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                         {user.friends.length === 0 ? (
-                            <div className="text-center py-8 text-gray-500">
-                                <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                                <p>No friends yet</p>
+                            <div className="text-center py-12 text-gray-500">
+                                <Users className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                                <p className="text-lg font-medium">No friends yet</p>
+                                <p className="text-sm text-gray-400 mt-1">Start connecting with people!</p>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                 {user.friends.map(friend => (
-                                    <div key={friend.id} className="flex flex-col items-center bg-white rounded-lg shadow p-4 border">
-                                        <Link href={`/settings/profile/${friend.id}`} className="flex flex-col items-center">
-                                            <img src={friend.profilePic} alt={friend.name} className="w-16 h-16 rounded-full object-cover mb-2" />
-                                            <div className="font-medium text-gray-800 text-center mb-2 hover:text-blue-600 transition-colors">{friend.name}</div>
+                                    <div key={friend.id} className="flex flex-col items-center bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 p-6 border border-gray-100">
+                                        <Link href={`/settings/profile/${friend.id}`} className="flex flex-col items-center group">
+                                            <img src={friend.profilePic} alt={friend.name} className="w-20 h-20 rounded-full object-cover mb-3 shadow-md group-hover:shadow-lg transition-shadow duration-200" />
+                                            <div className="font-semibold text-gray-800 text-center mb-3 group-hover:text-blue-600 transition-colors">{friend.name}</div>
                                         </Link>
                                         {isOwnProfile && (
                                             <Button
@@ -556,7 +599,7 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
                                                 variant="outline"
                                                 onClick={() => handleUnfriend(friend.friendship_id, friend.name)}
                                                 disabled={unfriending === friend.friendship_id}
-                                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300 transition-all duration-200"
                                             >
                                                 {unfriending === friend.friendship_id ? (
                                                     <>
@@ -633,20 +676,23 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
                     </div>
                 )}
                 {tab === 'groups' && (
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                         {user.groups.length === 0 ? (
-                            <div className="text-center py-8 text-gray-500">
-                                <UserCircle2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                                <p>No groups joined yet</p>
+                            <div className="text-center py-12 text-gray-500">
+                                <UserCircle2 className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                                <p className="text-lg font-medium">No groups joined yet</p>
+                                <p className="text-sm text-gray-400 mt-1">Join some groups to get started!</p>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                 {user.groups.map(group => (
-                                    <div key={group.id} className="flex flex-col bg-white rounded-lg shadow p-4 border">
-                                        <Link href={`/groups/${group.id}`} className="flex flex-col">
-                                            <img src={group.cover} alt={group.name} className="w-full h-20 object-cover rounded mb-2" />
-                                            <div className="font-medium text-gray-800 text-center mb-1 hover:text-blue-600 transition-colors">{group.name}</div>
-                                            <div className="text-sm text-gray-500 text-center">{group.members_count} members</div>
+                                    <div key={group.id} className="flex flex-col bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden border border-gray-100">
+                                        <Link href={`/groups/${group.id}`} className="flex flex-col group">
+                                            <img src={group.cover} alt={group.name} className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-200" />
+                                            <div className="p-4">
+                                                <div className="font-semibold text-gray-800 text-center mb-2 group-hover:text-blue-600 transition-colors">{group.name}</div>
+                                                <div className="text-sm text-gray-500 text-center">{group.members_count} members</div>
+                                            </div>
                                         </Link>
                                     </div>
                                 ))}
