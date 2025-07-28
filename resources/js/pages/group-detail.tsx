@@ -143,7 +143,7 @@ export default function GroupDetail({ group }: GroupDetailProps) {
 
   return (
     <AppShell>
-      <div className="max-w-7xl w-full mx-auto mt-6 bg-white rounded-xl shadow-lg overflow-hidden">
+      <div className="max-w-7xl w-full mx-auto mt-6 bg-white rounded-xl shadow-lg overflow-y-auto">
         {/* Cover Photo */}
         <div className="relative h-60 bg-gray-200">
           <img
@@ -281,7 +281,7 @@ export default function GroupDetail({ group }: GroupDetailProps) {
           </DialogContent>
         </Dialog>
                 {/* Feed or Join Button */}
-        <div className="px-8 pb-8 h-[calc(100vh-400px)] overflow-y-auto">
+        <div className="px-8 pb-8">
           {group.is_member ? (
             <Feed groupId={group.id} groupPrivacy={group.visibility} isGroupMember={true} membershipStatus={group.membership_status} />
           ) : group.membership_status === 'pending' ? (
