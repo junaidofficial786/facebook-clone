@@ -76,7 +76,7 @@ export default function People({ pendingRequests, suggestedPeople }: PeopleProps
     return (
         <>
             <Head title="People" />
-            <div className="flex-1 p-6">
+            <div className="flex-1 p-6 h-full overflow-y-auto">
                 <h1 className="text-3xl font-bold mb-8">People</h1>
 
                 {/* Pending Requests Section */}

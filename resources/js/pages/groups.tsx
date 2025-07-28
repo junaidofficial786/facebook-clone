@@ -30,7 +30,7 @@ export default function GroupsPage() {
     return (
         <>
             <Head title="Groups" />
-            <div className="flex-1 p-6">
+            <div className="flex-1 p-6 h-full overflow-y-auto">
                 <div className="flex items-center justify-between mb-6">
                     <h1 className="text-2xl font-bold">Groups</h1>
                     <Button variant="default" asChild>
