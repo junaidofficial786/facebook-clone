@@ -48,7 +48,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                 <div className="flex flex-col items-center gap-4 mb-2">
                     <div className="flex items-center justify-center mb-2">
                         {/* App Logo with gradient background */}
-                        <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 p-4 shadow-lg">
+                        <div className="rounded-2xl bg-gradient-to-br from-primary to-blue-600 p-4 shadow-lg">
                             <span className="text-3xl font-bold text-white">{name?.charAt(0)?.toUpperCase() || 'A'}</span>
                         </div>
                     </div>

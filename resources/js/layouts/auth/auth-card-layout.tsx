@@ -18,10 +18,10 @@ export default function AuthCardLayout({
         <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
             <div className="flex w-full max-w-md flex-col gap-6">
                 <Link href={route('home')} className="flex items-center gap-3 self-center font-medium hover:opacity-80 transition-opacity">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-md">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-blue-600 text-white shadow-md">
                         <span className="text-lg font-bold">{name?.charAt(0)?.toUpperCase() || 'A'}</span>
                     </div>
-                    <span className="text-lg font-semibold text-gray-900 dark:text-white">{name || 'App Name'}</span>
+                    <span className="text-lg font-semibold text-foreground">{name || 'App Name'}</span>
                 </Link>
 
                 <div className="flex flex-col gap-6">

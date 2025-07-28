@@ -19,12 +19,12 @@ export default function AuthSimpleLayout({ children, title, description }: Props
                         {/* App Logo/Name */}
                         <div className="flex items-center justify-center">
                             <div className="flex items-center gap-3">
-                                <div className="flex aspect-square size-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg">
+                                <div className="flex aspect-square size-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-blue-600 text-white shadow-lg">
                                     <span className="text-2xl font-bold">{name?.charAt(0)?.toUpperCase() || 'A'}</span>
                                 </div>
                                 <div className="text-center">
-                                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{name || 'App Name'}</h1>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">Welcome back</p>
+                                    <h1 className="text-2xl font-bold text-foreground">{name || 'App Name'}</h1>
+                                    <p className="text-sm text-muted-foreground">Welcome back</p>
                                 </div>
                             </div>
                         </div>

@@ -5,7 +5,7 @@ export default function AppLogo() {
 
     return (
         <>
-            <div className="flex aspect-square size-8 items-center justify-center rounded-md bg-gradient-to-br from-blue-600 to-blue-700 text-white">
+            <div className="flex aspect-square size-8 items-center justify-center rounded-md bg-gradient-to-br from-primary to-blue-600 text-white">
                 <span className="text-sm font-bold">{name?.charAt(0)?.toUpperCase() || 'A'}</span>
             </div>
             <div className="ml-1 grid flex-1 text-left text-sm">

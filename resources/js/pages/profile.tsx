@@ -422,7 +422,7 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
                                         placeholder="Write something about yourself..."
                                     />
                                     <div className="flex gap-2">
-                                        <Button variant="default" size="sm" onClick={handleBioSave} className="bg-blue-600 hover:bg-blue-700">
+                                        <Button variant="default" size="sm" onClick={handleBioSave}>
                                             {loadingBio ? (
                                                 <>
                                                     <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
@@ -439,8 +439,8 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
                                 <div className="flex items-start gap-2">
                                     <span className="text-gray-700 leading-relaxed">{user.bio || "No bio yet."}</span>
                                     {isOwnProfile && (
-                                        <button
-                                            className="text-blue-600 hover:text-blue-800 transition-colors duration-200 p-1 rounded-full hover:bg-blue-50"
+                                                                                <button
+                                            className="text-primary hover:text-blue-700 transition-colors duration-200 p-1 rounded-full hover:bg-accent"
                                             title="Edit bio"
                                             onClick={handleBioEdit}
                                         >
@@ -484,12 +484,12 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
                                 ) : (
                                     // I received the request - show Accept/Reject buttons
                                     <div className="flex gap-2">
-                                        <Button
-                                            variant="default"
-                                            onClick={handleAcceptFriendRequest}
-                                            disabled={acceptingRequest}
-                                            className="bg-green-600 hover:bg-green-700 px-6 py-2"
-                                        >
+                                                                                    <Button
+                                                variant="default"
+                                                onClick={handleAcceptFriendRequest}
+                                                disabled={acceptingRequest}
+                                                className="px-6 py-2"
+                                            >
                                             {acceptingRequest ? (
                                                 <>
                                                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -517,12 +517,12 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
                                     </div>
                                 )
                             ) : (
-                                <Button
-                                    variant="default"
-                                    onClick={handleSendFriendRequest}
-                                    disabled={sendingRequest}
-                                    className="bg-blue-600 hover:bg-blue-700 px-6 py-2"
-                                >
+                                                                    <Button
+                                        variant="default"
+                                        onClick={handleSendFriendRequest}
+                                        disabled={sendingRequest}
+                                        className="px-6 py-2"
+                                    >
                                     {sendingRequest ? (
                                         <>
                                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -537,32 +537,32 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
                     )}
                 </div>
             </div>
-            {/* Tabs */}
-            <div className="px-8 pt-4 bg-white sticky top-0 z-10 border-b shadow-sm">
-                <div className="flex gap-8 text-gray-600 font-medium text-base">
+                        {/* Tabs */}
+            <div className="px-8 pt-4 bg-card sticky top-0 z-10 border-b shadow-sm">
+                <div className="flex gap-8 text-muted-foreground font-medium text-base">
                     <button
-                        className={`py-4 border-b-2 transition-all duration-200 hover:text-blue-600 ${tab === 'posts' ? 'border-blue-600 text-blue-600' : 'border-transparent hover:border-gray-300'}`}
+                        className={`py-4 border-b-2 transition-all duration-200 hover:text-primary ${tab === 'posts' ? 'border-primary text-primary' : 'border-transparent hover:border-border'}`}
                         onClick={() => setTab('posts')}
                     >
                         <List className="inline w-5 h-5 mr-2" />
                         Posts
                     </button>
-                    <button
-                        className={`py-4 border-b-2 transition-all duration-200 hover:text-blue-600 ${tab === 'friends' ? 'border-blue-600 text-blue-600' : 'border-transparent hover:border-gray-300'}`}
+                                        <button
+                        className={`py-4 border-b-2 transition-all duration-200 hover:text-primary ${tab === 'friends' ? 'border-primary text-primary' : 'border-transparent hover:border-border'}`}
                         onClick={() => setTab('friends')}
                     >
                         <Users className="inline w-5 h-5 mr-2" />
                         Friends
                     </button>
                     <button
-                        className={`py-4 border-b-2 transition-all duration-200 hover:text-blue-600 ${tab === 'info' ? 'border-blue-600 text-blue-600' : 'border-transparent hover:border-gray-300'}`}
+                        className={`py-4 border-b-2 transition-all duration-200 hover:text-primary ${tab === 'info' ? 'border-primary text-primary' : 'border-transparent hover:border-border'}`}
                         onClick={() => setTab('info')}
                     >
                         <Info className="inline w-5 h-5 mr-2" />
                         Information
                     </button>
                     <button
-                        className={`py-4 border-b-2 transition-all duration-200 hover:text-blue-600 ${tab === 'groups' ? 'border-blue-600 text-blue-600' : 'border-transparent hover:border-gray-300'}`}
+                        className={`py-4 border-b-2 transition-all duration-200 hover:text-primary ${tab === 'groups' ? 'border-primary text-primary' : 'border-transparent hover:border-border'}`}
                         onClick={() => setTab('groups')}
                     >
                         <UserCircle2 className="inline w-5 h-5 mr-2" />
@@ -580,18 +580,18 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
                 {tab === 'friends' && (
                     <div className="space-y-6">
                         {user.friends.length === 0 ? (
-                            <div className="text-center py-12 text-gray-500">
+                            <div className="text-center py-12 text-muted-foreground">
                                 <Users className="h-16 w-16 mx-auto mb-4 opacity-50" />
                                 <p className="text-lg font-medium">No friends yet</p>
-                                <p className="text-sm text-gray-400 mt-1">Start connecting with people!</p>
+                                <p className="text-sm text-muted-foreground/70 mt-1">Start connecting with people!</p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                 {user.friends.map(friend => (
-                                    <div key={friend.id} className="flex flex-col items-center bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 p-6 border border-gray-100">
+                                    <div key={friend.id} className="flex flex-col items-center bg-card rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 p-6 border border-border">
                                         <Link href={`/settings/profile/${friend.id}`} className="flex flex-col items-center group">
                                             <img src={friend.profilePic} alt={friend.name} className="w-20 h-20 rounded-full object-cover mb-3 shadow-md group-hover:shadow-lg transition-shadow duration-200" />
-                                            <div className="font-semibold text-gray-800 text-center mb-3 group-hover:text-blue-600 transition-colors">{friend.name}</div>
+                                            <div className="font-semibold text-foreground text-center mb-3 group-hover:text-primary transition-colors">{friend.name}</div>
                                         </Link>
                                         {isOwnProfile && (
                                             <Button
@@ -678,20 +678,20 @@ export function ProfilePage({ user, isOwnProfile }: ProfilePageProps) {
                 {tab === 'groups' && (
                     <div className="space-y-6">
                         {user.groups.length === 0 ? (
-                            <div className="text-center py-12 text-gray-500">
+                            <div className="text-center py-12 text-muted-foreground">
                                 <UserCircle2 className="h-16 w-16 mx-auto mb-4 opacity-50" />
                                 <p className="text-lg font-medium">No groups joined yet</p>
-                                <p className="text-sm text-gray-400 mt-1">Join some groups to get started!</p>
+                                <p className="text-sm text-muted-foreground/70 mt-1">Join some groups to get started!</p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                 {user.groups.map(group => (
-                                    <div key={group.id} className="flex flex-col bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden border border-gray-100">
+                                    <div key={group.id} className="flex flex-col bg-card rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden border border-border">
                                         <Link href={`/groups/${group.id}`} className="flex flex-col group">
                                             <img src={group.cover} alt={group.name} className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-200" />
                                             <div className="p-4">
-                                                <div className="font-semibold text-gray-800 text-center mb-2 group-hover:text-blue-600 transition-colors">{group.name}</div>
-                                                <div className="text-sm text-gray-500 text-center">{group.members_count} members</div>
+                                                <div className="font-semibold text-foreground text-center mb-2 group-hover:text-primary transition-colors">{group.name}</div>
+                                                <div className="text-sm text-muted-foreground text-center">{group.members_count} members</div>
                                             </div>
                                         </Link>
                                     </div>
