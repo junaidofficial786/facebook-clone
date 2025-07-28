@@ -47,7 +47,8 @@ class FeedController extends Controller
                 $request->user(),
                 $request->content,
                 $request->privacy,
-                $request->hasFile('media') ? $request->file('media') : null
+                $request->hasFile('media') ? $request->file('media') : null,
+                $request->input('group_id') // pass group_id
             );
             return response()->json(['success' => true, 'post_id' => $post->id]);
         } catch (\Exception $e) {

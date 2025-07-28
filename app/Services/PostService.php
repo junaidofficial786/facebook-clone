@@ -22,6 +22,7 @@ class PostService
             'postReactions' => function ($q) use ($authUserId) {
                 $q->where('user_id', $authUserId);
             },
+            'group:id,name', // eager load group name
         ])
         ->withCount('postReactions as reactions_count')
         ->orderByDesc('id');
@@ -109,7 +110,7 @@ class PostService
      * @return Post
      * @throws \Exception
      */
-    public static function createPost($user, string $content, string $privacy, ?array $mediaFiles = null)
+    public static function createPost($user, string $content, string $privacy, ?array $mediaFiles = null, $groupId = null)
     {
         // Validate privacy value
         if (!in_array($privacy, ['public', 'friends', 'private'])) {
@@ -121,6 +122,7 @@ class PostService
             'user_id' => $user->id,
             'content' => $content,
             'visibility' => $privacy,
+            'group_id' => $groupId,
         ]);
 
         // Handle media files

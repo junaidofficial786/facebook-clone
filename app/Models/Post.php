@@ -23,4 +23,5 @@ class Post extends Model
     public function postTags() { return $this->hasMany(PostTag::class); }
     public function postReactions() { return $this->hasMany(PostReaction::class); }
     public function comments() { return $this->hasMany(Comment::class); }
+    public function group() { return $this->belongsTo(\App\Models\Group::class); }
 }

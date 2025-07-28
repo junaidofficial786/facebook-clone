@@ -8,9 +8,10 @@ import LoaderOverlay from '@/components/ui/loader';
 
 interface CreatePostProps {
     onPostCreated?: () => void;
+    groupId?: number;
 }
 
-export default function CreatePost({ onPostCreated }: CreatePostProps) {
+export default function CreatePost({ onPostCreated, groupId }: CreatePostProps) {
     const [editorValue, setEditorValue] = useState('');
     const [media, setMedia] = useState<File[]>([]);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -32,6 +33,9 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
         const formData = new FormData();
         formData.append('content', editorValue);
         formData.append('privacy', privacy);
+        if (groupId) {
+            formData.append('group_id', String(groupId));
+        }
         media.forEach((file) => {
             formData.append('media[]', file);
         });

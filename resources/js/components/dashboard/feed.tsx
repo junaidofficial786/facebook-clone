@@ -583,7 +583,7 @@ export default function Feed({ user_id, groupId, showCreatePost = true }: FeedPr
             {showToast && <Toast message={toastMessage} onClose={() => setShowToast(false)} />}
             <div ref={feedContainerRef} className="flex flex-col gap-6 h-full min-h-0 max-h-screen overflow-y-auto feed-scroll">
                 {showCreatePost && (
-                    <CreatePost onPostCreated={fetchPosts} />
+                    <CreatePost onPostCreated={fetchPosts} groupId={groupId} />
                 )}
 
                 {/* Skeleton Placeholder */}
@@ -623,6 +623,13 @@ export default function Feed({ user_id, groupId, showCreatePost = true }: FeedPr
                                 <div>
                                     <div className="font-medium">
                                         <Link href={`/settings/profile/${post.user?.id}`} className="text-black font-medium hover:underline">{post.user?.name}</Link>
+                                        {/* Show group name if in main feed and post has group */}
+                                        {typeof window !== 'undefined' && window.location.pathname.includes('feed') && post.group_id && post.group && (
+                                            <>
+                                                <span className="mx-1">&gt;</span>
+                                                <Link href={route('groups.show', post.group_id)} className="text-black font-medium hover:underline">{post.group.name}</Link>
+                                            </>
+                                        )}
                                     </div>
                                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                         {post.created_at_human}
@@ -1164,16 +1171,14 @@ function renderMentions(content: string, allUsers: any[]) {
         const id = firstNameToId[first];
         if (id) {
             parts.push(
-                <Link key={key++} href={`/settings/profile/${id}`} className="mention">
-                    {mention}
+                <Link key={key++} href={`/settings/profile/${id}`}>
+                    <span className="mention">{mention}</span>
                 </Link>
             );
         } else {
-            parts.push(
-                <span key={key++} className="mention">{mention}</span>
-            );
+            parts.push(<span key={key++} className="mention">{mention}</span>);
         }
-        lastIndex = match.index + mention.length;
+        lastIndex = match.index + match[0].length;
     }
     if (lastIndex < content.length) {
         parts.push(content.slice(lastIndex));
