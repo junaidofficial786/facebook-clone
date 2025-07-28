@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { AppShell } from '@/layouts/app/app-shell';
+import { useForm } from '@inertiajs/react';
 
 export default function GroupsCreate() {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [visibility, setVisibility] = useState('public');
+  const { data, setData, post, processing, errors, reset } = useForm({
+    name: '',
+    description: '',
+    visibility: 'public',
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Add backend logic
-    alert(`Group Created!\nName: ${name}\nDescription: ${description}\nVisibility: ${visibility}`);
+    post(route('groups.store'));
   };
 
   return (
@@ -23,33 +25,38 @@ export default function GroupsCreate() {
             <input
               type="text"
               className="w-full border rounded px-3 py-2"
-              value={name}
-              onChange={e => setName(e.target.value)}
+              value={data.name}
+              onChange={e => setData('name', e.target.value)}
               required
             />
+            {errors.name && <div className="text-red-500 text-sm mt-1">{errors.name}</div>}
           </div>
           <div>
             <label className="block font-medium mb-1">Description</label>
             <textarea
               className="w-full border rounded px-3 py-2"
-              value={description}
-              onChange={e => setDescription(e.target.value)}
+              value={data.description}
+              onChange={e => setData('description', e.target.value)}
               rows={4}
               required
             />
+            {errors.description && <div className="text-red-500 text-sm mt-1">{errors.description}</div>}
           </div>
           <div>
             <label className="block font-medium mb-1">Visibility</label>
             <select
               className="w-full border rounded px-3 py-2"
-              value={visibility}
-              onChange={e => setVisibility(e.target.value)}
+              value={data.visibility}
+              onChange={e => setData('visibility', e.target.value)}
             >
               <option value="public">Public</option>
               <option value="private">Private</option>
             </select>
+            {errors.visibility && <div className="text-red-500 text-sm mt-1">{errors.visibility}</div>}
           </div>
-          <Button type="submit" variant="primary" className="w-full">Create Group</Button>
+          <Button type="submit" variant="primary" className="w-full" disabled={processing}>
+            {processing ? 'Creating...' : 'Create Group'}
+          </Button>
         </form>
       </div>
     </AppShell>

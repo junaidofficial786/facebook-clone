@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\FeedController;
+use App\Http\Controllers\GroupController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -17,7 +18,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('posts/{post}', [FeedController::class, 'destroy'])->name('posts.destroy');
     Route::get('posts/{post}/reactions/{reaction}', [FeedController::class, 'reactionUsers']);
     Route::get('comments/{comment}/reactions/{reaction}', [FeedController::class, 'commentReactionUsers']);
-    Route::post('posts', [FeedController::class, 'store'])->name('posts.store');
+    Route::post('posts', [FeedController::class, 'store'])->name('posts');
     Route::get('/api/reactions', [App\Http\Controllers\FeedController::class, 'allReactions']);
     Route::post('/api/posts/{post}/react', [App\Http\Controllers\FeedController::class, 'reactToPost']);
     Route::delete('/api/posts/{post}/react', [App\Http\Controllers\FeedController::class, 'unreactToPost']);
@@ -31,6 +32,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/groups/create', function () {
         return Inertia::render('groups-create');
     })->name('groups.create');
+    Route::post('/groups', [GroupController::class, 'store'])->name('groups.store');
 });
 
 //an revern event that throws event for testing
