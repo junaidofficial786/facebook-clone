@@ -79,14 +79,14 @@ export default function People({ pendingRequests, suggestedPeople }: PeopleProps
         <>
             <Head title="People" />
 
-            <div className="flex w-full max-w-7xl gap-6 px-2 min-h-0 h-screen overflow-hidden mx-auto">
+            <div className="flex w-full gap-12 px-6 min-h-0">
                 <div className="hidden lg:block w-1/4">
                     <div className="sticky top-24">
                         <LeftColumn />
                     </div>
                 </div>
-                <div className="flex-1 min-w-0 flex flex-col h-full min-h-0 overflow-y-auto">
-                    <div className="flex-1 min-h-0 h-full p-6">
+                <div className="flex-1 min-w-0 flex flex-col">
+                    <div className="flex-1 p-6">
                         <h1 className="text-3xl font-bold mb-8">People</h1>
 
                 {/* Pending Requests Section */}

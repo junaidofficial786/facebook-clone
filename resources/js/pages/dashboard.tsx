@@ -27,7 +27,7 @@ function Dashboard() {
 
 
     return (
-        <div className="flex w-full max-w-7xl gap-6 px-2 min-h-0 mx-auto">
+        <div className="flex w-full gap-12 px-6 min-h-0">
             <div className="hidden lg:block w-1/4">
                 <div className="sticky top-24">
                     <LeftColumn />
