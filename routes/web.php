@@ -2,6 +2,7 @@
 
 use App\Events\PostCreate;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\FeedController;
@@ -50,7 +51,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         })
         ->withCount('groupMembers')
         ->inRandomOrder()
-        ->limit(10)
+        ->limit(50)
         ->get(['id', 'name'])
         ->map(function($group) {
             return [
@@ -91,3 +92,39 @@ Route::get('/event', function () {
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
+
+Route::get('/add-friends', function () {
+    for ($i = 0; $i < 100; $i++) {
+
+        $rand1 = rand(1, 100);
+        $rand2 = rand(1, 100);
+        $already = Friendship::where('user_id', $rand1)->where('friend_id', $rand2)->first();
+        if ($already) {
+            continue;
+        }
+
+        Friendship::create([
+            'user_id' => $rand1,
+            'friend_id' => $rand2,
+            'status' => 'accepted',
+            'responded_at' => now(),
+        ]);
+
+    }
+    dd('ok');
+});
+
+Route::get('/create-random-groups', function () {
+    for ($i = 0; $i < 50; $i++) {
+        \App\Models\Group::create([
+            'name' => Str::random(8) . ' Group',
+            'description' => 'This is a randomly generated group for testing purposes.',
+            'visibility' => rand(0, 1) ? 'public' : 'private',
+            'created_by' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    dd('50 random groups created successfully!');
+});
