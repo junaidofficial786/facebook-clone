@@ -36,7 +36,7 @@ function Dashboard() {
             <div className="flex-1 min-w-0 flex flex-col">
                 <div className="flex-1">
                     <Feed/>
-                    <Feed user_id={100} groupId={4} />
+                    {/* <Feed user_id={100} groupId={4} /> */}
                 </div>
             </div>
             <div className="hidden xl:block w-1/4">

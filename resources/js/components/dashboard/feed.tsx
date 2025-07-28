@@ -409,7 +409,9 @@ export default function Feed({ user_id, groupId, showCreatePost = true, groupPri
     const fetchMorePosts = useCallback(async () => {
         const nextPage = pageRef.current + 1;
 
-        if (loadingRef.current || !hasMoreRef.current || inFlightPages.current.has(nextPage)) return;
+        if (loadingRef.current || !hasMoreRef.current || inFlightPages.current.has(nextPage)) {
+            return;
+        }
 
         inFlightPages.current.add(nextPage);
         setLoading(true);
@@ -544,19 +546,7 @@ export default function Feed({ user_id, groupId, showCreatePost = true, groupPri
     };
 
     // Scroll listener on feed container
-    useEffect(() => {
-        const handleScroll = () => {
-            if (
-                window.innerHeight + window.scrollY + 100 >=
-                document.documentElement.scrollHeight
-            ) {
-                fetchMorePosts();
-            }
-        };
 
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, [fetchMorePosts]);
 
     // Add custom mention state and logic
     const [mentionDropdown, setMentionDropdown] = useState<{ postId: number, query: string, position: { top: number, left: number } } | null>(null);
@@ -565,6 +555,7 @@ export default function Feed({ user_id, groupId, showCreatePost = true, groupPri
     const [mentionSelected, setMentionSelected] = useState(0);
     const mentionDropdownRef = useRef<HTMLDivElement>(null);
     const inputRefs = useRef<{ [postId: number]: HTMLInputElement | null }>({});
+    const loadMoreRef = useRef<HTMLDivElement>(null);
 
     const fetchMentionUsers = async (query: string) => {
         setMentionLoading(true);
@@ -644,6 +635,32 @@ export default function Feed({ user_id, groupId, showCreatePost = true, groupPri
         document.head.appendChild(style);
     }
 
+    // Intersection Observer for automatic loading
+    useEffect(() => {
+        const loadMoreElement = loadMoreRef.current;
+        if (!loadMoreElement || !hasMore || loading) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting && hasMore && !loading) {
+                        fetchMorePosts();
+                    }
+                });
+            },
+            {
+                rootMargin: '100px', // Start loading 100px before button is visible
+                threshold: 0.1
+            }
+        );
+
+        observer.observe(loadMoreElement);
+
+        return () => {
+            observer.disconnect();
+        };
+    }, [hasMore, loading, fetchMorePosts]);
+
     return (
         <>
             {deleting && <LoaderOverlay />}
@@ -680,7 +697,9 @@ export default function Feed({ user_id, groupId, showCreatePost = true, groupPri
                             <div className="bg-gray-200 h-8 w-full rounded mb-2" />
                         </CardFooter>
                     </Card>
-                ) : posts && posts.length > 0 ? posts.map((post: any) => (
+                ) : posts && posts.length > 0 ? (
+                    <>
+                        {posts.map((post: any) => (
                     <Card key={post.id}>
                         <CardHeader className="flex flex-row items-center gap-3 justify-between">
                             <div className="flex items-center gap-3">
@@ -1203,10 +1222,32 @@ export default function Feed({ user_id, groupId, showCreatePost = true, groupPri
                             </div>
                         </CardFooter>
                     </Card>
-                )) : <div>No posts found.</div>}
+                ))}
+
+                                {/* Load More Button */}
+                {hasMore && (
+                    <div ref={loadMoreRef} className="text-center py-4">
+                        <Button
+                            onClick={fetchMorePosts}
+                            disabled={loading}
+                            className="px-8 py-2"
+                        >
+                            {loading ? (
+                                <>
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                    Loading...
+                                </>
+                            ) : (
+                                'Load More'
+                            )}
+                        </Button>
+                    </div>
+                )}
 
                 {loading && <div className="text-center py-4 text-muted-foreground">Loading...</div>}
-                {!hasMore && <div className="text-center py-4 text-muted-foreground">No more posts</div>}
+                {!hasMore && posts && posts.length > 0 && <div className="text-center py-4 text-muted-foreground">No more posts</div>}
+            </>
+        ) : <div>No posts found.</div>}
             </div>
             {/* Media View Modal */}
             {viewMedia && (

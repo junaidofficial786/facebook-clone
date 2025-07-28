@@ -12,6 +12,7 @@ class PostService
 
     public static function fetchFeedPosts($perPage = 10, $page = null, $userId = null, $groupId = null)
     {
+        // dd($perPage);
         $authUserId = Auth::id();
         $query = Post::with([
             'user:id,name,profile_pic',
