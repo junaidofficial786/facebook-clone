@@ -184,11 +184,20 @@ class ConversationController extends Controller
             $query->where('user_id', $user->id);
         })
         ->with([
-            'messages.user',
             'conversationParticipants.user',
             'creator'
         ])
         ->findOrFail($id);
+
+        // Get only last 100 messages ordered by ID ascending (oldest first)
+        $messages = $conversation->messages()
+            ->with('user')
+            ->orderBy('id', 'asc')
+            ->limit(100)
+            ->get();
+
+        // Debug: Log message count
+        \Log::info("Messages count for conversation {$id}: " . $messages->count());
 
         // Get other participants
         $otherParticipants = $conversation->conversationParticipants
@@ -211,7 +220,7 @@ class ConversationController extends Controller
                     'role' => $participant->role,
                 ];
             }),
-            'messages' => $conversation->messages->map(function ($message) use ($conversation) {
+            'messages' => $messages->map(function ($message) use ($conversation) {
                 // Get receivers for this message
                 $receivers = $conversation->conversationParticipants
                     ->where('user_id', '!=', $message->user_id)
@@ -231,7 +240,7 @@ class ConversationController extends Controller
                     'created_at' => $message->created_at,
                     'status' => $message->status,
                 ];
-            }),
+            })->toArray(),
         ];
 
         // Check if request wants JSON (for chat popup)

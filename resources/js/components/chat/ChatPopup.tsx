@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { usePage } from '@inertiajs/react';
+import { usePage, Link } from '@inertiajs/react';
+import { useOnlineUsers } from '@/contexts/OnlineUsersContext';
 
 interface Message {
     id: number;
@@ -38,18 +39,46 @@ export function ChatPopup({ conversation, onClose, isOpen }: ChatPopupProps) {
     const [newMessage, setNewMessage] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const [isSending, setIsSending] = useState(false);
-    const [messages, setMessages] = useState(conversation.messages);
+    const [messages, setMessages] = useState(() => {
+        if (conversation.messages) {
+            return Array.isArray(conversation.messages)
+                ? conversation.messages
+                : Object.values(conversation.messages) as Message[];
+        }
+        return [];
+    });
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const { auth } = usePage().props as any;
     const currentUser = auth?.user || { id: 1, name: 'Junaid Hassan' };
+    const { isUserOnline } = useOnlineUsers();
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
+    // Update messages when conversation changes
+    useEffect(() => {
+        console.log('Conversation messages:', conversation.messages);
+        if (conversation.messages) {
+            // Convert object to array if needed
+            const messagesArray = Array.isArray(conversation.messages)
+                ? conversation.messages
+                : Object.values(conversation.messages) as Message[];
+            setMessages(messagesArray);
+        }
+    }, [conversation.messages]);
+
+    useEffect(() => {
+        // Small delay to ensure DOM is updated
+        setTimeout(() => {
+            scrollToBottom();
+        }, 100);
+    }, [messages]);
+
+    // Also scroll when component first mounts
     useEffect(() => {
         scrollToBottom();
-    }, [messages]);
+    }, []);
 
     // Listen for new messages via Echo
     useEffect(() => {
@@ -115,7 +144,7 @@ export function ChatPopup({ conversation, onClose, isOpen }: ChatPopupProps) {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed bottom-4 right-4 w-80 h-96 bg-white rounded-lg shadow-2xl border border-gray-200 flex flex-col z-50">
+        <div className="fixed bottom-4 right-4 w-96 h-[500px] bg-white rounded-lg shadow-2xl border border-gray-200 flex flex-col z-50">
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b bg-gray-50 rounded-t-lg">
                 <div className="flex items-center gap-3">
@@ -137,8 +166,15 @@ export function ChatPopup({ conversation, onClose, isOpen }: ChatPopupProps) {
                         )}
                     </Avatar>
                     <div>
-                        <div className="font-semibold text-sm">{conversation.name}</div>
-                        <div className="text-xs text-green-600">● Online</div>
+                        <Link
+                            href={`/settings/profile/${conversation.participants.find(p => p.id !== currentUser.id)?.id || 1}`}
+                            className="font-semibold text-sm hover:text-blue-600 hover:underline cursor-pointer transition-colors"
+                        >
+                            {conversation.name}
+                        </Link>
+                        <div className={`text-xs ${isUserOnline(conversation.participants.find(p => p.id !== currentUser.id)?.id || 0) ? 'text-green-600' : 'text-gray-500'}`}>
+                            {isUserOnline(conversation.participants.find(p => p.id !== currentUser.id)?.id || 0) ? '● Online' : '○ Offline'}
+                        </div>
                     </div>
                 </div>
                 <div className="flex items-center gap-1">
@@ -166,14 +202,14 @@ export function ChatPopup({ conversation, onClose, isOpen }: ChatPopupProps) {
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                {messages.map((message) => (
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                {Array.isArray(messages) && messages.map((message) => (
                     <div
                         key={message.id}
                         className={`flex ${message.sender_id === currentUser.id ? 'justify-end' : 'justify-start'}`}
                     >
                         <div
-                            className={`max-w-xs px-3 py-2 rounded-lg ${
+                            className={`max-w-sm px-4 py-3 rounded-lg ${
                                 message.sender_id === currentUser.id
                                     ? 'bg-blue-500 text-white'
                                     : 'bg-white text-gray-900 border border-gray-200'
@@ -207,7 +243,7 @@ export function ChatPopup({ conversation, onClose, isOpen }: ChatPopupProps) {
             </div>
 
             {/* Input */}
-            <div className="p-4 border-t bg-gray-50 rounded-b-lg">
+            <div className="p-6 border-t bg-gray-50 rounded-b-lg">
                 <div className="flex items-center gap-2">
                     <Input
                         value={newMessage}

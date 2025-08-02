@@ -76,6 +76,7 @@ export function useChatManager() {
             if (response.ok) {
                 const data = await response.json();
                 const conversation = data.conversation;
+                console.log('Fetched conversation:', conversation);
 
                 // Calculate position for new chat
                 const chatCount = openChats.size;
