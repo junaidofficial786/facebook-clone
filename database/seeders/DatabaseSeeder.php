@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        /*
         // Create a specific user
         $myUser = User::factory()->create([
             'name' => 'Junaid Hassan',
@@ -111,5 +112,10 @@ class DatabaseSeeder extends Seeder
                 ]);
             }
         }
+        // Call the ConversationSeeder
+        $this->call([
+            ConversationSeeder::class,
+        ]);
+        */
     }
 }

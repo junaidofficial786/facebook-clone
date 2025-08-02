@@ -22,6 +22,9 @@ import {
 } from 'lucide-react';
 import { usePage, Link } from '@inertiajs/react';
 import { useInitials } from '@/hooks/use-initials';
+import { useConversations } from '@/hooks/use-conversations';
+import { useChatManager } from '@/hooks/use-chat-manager';
+import { ChatPopup } from '@/components/chat/ChatPopup';
 import.meta.env;
 
 export function AppHeader() {
@@ -29,6 +32,8 @@ export function AppHeader() {
     const { auth } = page.props;
     const getInitials = useInitials();
     const appName = import.meta.env.VITE_APP_NAME || 'FacebookClone';
+    const { conversations, loading } = useConversations();
+    const { openChats, openChat, closeChat } = useChatManager();
 
     const isFeedActive = typeof window !== 'undefined' && window.location.pathname.startsWith('/feed');
     const isGroupsActive = typeof window !== 'undefined' && window.location.pathname.startsWith('/groups');
@@ -142,20 +147,56 @@ export function AppHeader() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-80 mt-2">
                             <div className="font-semibold px-3 py-2 text-foreground border-b">Messages</div>
-                            {dummyMessages.map(msg => (
-                                <DropdownMenuItem key={msg.id} className="flex items-center gap-3 py-2">
-                                    <img src={msg.image} alt={msg.name} className="w-10 h-10 rounded-full object-cover" />
-                                    <div className="flex-1 min-w-0">
-                                        <div className="font-medium truncate text-foreground">{msg.name}</div>
-                                        <div className="text-xs text-muted-foreground truncate">{msg.lastMessage}</div>
-                                    </div>
-                                </DropdownMenuItem>
-                            ))}
-                            {dummyMessages.length === 0 && (
-                                <div className="px-3 py-4 text-muted-foreground text-sm">No messages</div>
+                                                        {loading ? (
+                                <div className="px-3 py-4 text-muted-foreground text-sm">Loading...</div>
+                            ) : conversations.length > 0 ? (
+                                conversations.slice(0, 5).map(conversation => (
+                                    <DropdownMenuItem
+                                        key={conversation.id}
+                                        className="flex items-center gap-3 py-2 cursor-pointer"
+                                        onClick={() => openChat(conversation.id)}
+                                    >
+                                        <Avatar className="w-10 h-10">
+                                            <AvatarFallback>
+                                                {conversation.name.charAt(0).toUpperCase()}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="font-medium truncate text-foreground">
+                                                {conversation.name}
+                                            </div>
+                                            <div className="text-xs text-muted-foreground truncate">
+                                                {conversation.last_message ? (
+                                                    <>
+                                                        <span className="font-medium">{conversation.last_message.sender_name}: </span>
+                                                        {conversation.last_message.content}
+                                                    </>
+                                                ) : 'No messages yet'}
+                                            </div>
+                                        </div>
+                                    </DropdownMenuItem>
+                                ))
+                            ) : (
+                                <div className="px-3 py-4 text-muted-foreground text-sm">No conversations</div>
+                            )}
+                            {conversations.length > 5 && (
+                                <div className="px-3 py-2 text-xs text-muted-foreground border-t">
+                                    View all conversations
+                                </div>
                             )}
                         </DropdownMenuContent>
                     </DropdownMenu>
+
+                    {/* Chat Popups */}
+                    {openChats.map((openChat) => (
+                        <ChatPopup
+                            key={openChat.conversation.id}
+                            conversation={openChat.conversation}
+                            onClose={() => closeChat(openChat.conversation.id)}
+                            isOpen={true}
+                        />
+                    ))}
+
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <button className="relative rounded-full p-2 hover:bg-accent transition-colors">

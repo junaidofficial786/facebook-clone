@@ -8,6 +8,7 @@ use App\Http\Controllers\FeedController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\PeopleController;
 use App\Http\Controllers\TestController;
+use App\Http\Controllers\ConversationController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -53,6 +54,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/api/friend-request', [PeopleController::class, 'sendFriendRequest'])->name('friend.request');
     Route::post('/api/friend-request/accept', [PeopleController::class, 'acceptFriendRequest'])->name('friend.accept');
     Route::post('/api/friend-request/reject', [PeopleController::class, 'rejectFriendRequest'])->name('friend.reject');
+
+    // Conversations routes
+    Route::get('/conversations', [ConversationController::class, 'index'])->name('conversations.index');
+    Route::get('/api/conversations', [ConversationController::class, 'apiIndex'])->name('conversations.api');
+    Route::get('/conversations/{conversation}', [ConversationController::class, 'show'])->name('conversations.show');
+    Route::post('/conversations', [ConversationController::class, 'store'])->name('conversations.store');
+    Route::post('/conversations/{conversation}/messages', [ConversationController::class, 'sendMessage'])->name('conversations.send-message');
 });
 
 // Testing routes

@@ -17,4 +17,5 @@ class Conversation extends Model
     public function conversationParticipants() { return $this->hasMany(ConversationParticipant::class); }
     public function messages() { return $this->hasMany(Message::class); }
     public function creator() { return $this->belongsTo(User::class, 'created_by'); }
+    public function lastMessage() { return $this->belongsTo(Message::class, 'last_message_id'); }
 }
