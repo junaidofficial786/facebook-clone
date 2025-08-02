@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Conversation;
 use App\Models\ConversationParticipant;
 use App\Models\Message;
+use App\Events\MessageSent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -74,6 +75,7 @@ class ConversationController extends Controller
                     return [
                         'id' => $participant->user->id,
                         'name' => $participant->user->name,
+                        'profile_pic' => $participant->user->profile_pic,
                         'role' => $participant->role,
                     ];
                 }),
@@ -157,6 +159,7 @@ class ConversationController extends Controller
                     return [
                         'id' => $participant->user->id,
                         'name' => $participant->user->name,
+                        'profile_pic' => $participant->user->profile_pic,
                         'role' => $participant->role,
                     ];
                 }),
@@ -312,6 +315,12 @@ class ConversationController extends Controller
             'content' => $request->content,
             'status' => 'sent',
         ]);
+
+        // Load the user relationship for broadcasting
+        $message->load('user');
+
+        // Broadcast the message event
+        broadcast(new MessageSent($message))->toOthers();
 
         // The last_message_id will be automatically updated by the model event
 

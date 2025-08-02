@@ -18,6 +18,7 @@ interface Conversation {
     participants: Array<{
         id: number;
         name: string;
+        profile_pic?: string;
         role: string;
     }>;
     created_at: string;

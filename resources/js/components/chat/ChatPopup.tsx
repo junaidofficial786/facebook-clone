@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { usePage } from '@inertiajs/react';
 
 interface Message {
     id: number;
@@ -21,6 +22,7 @@ interface Conversation {
     participants: Array<{
         id: number;
         name: string;
+        profile_pic?: string;
         role: string;
     }>;
     messages: Message[];
@@ -35,8 +37,11 @@ interface ChatPopupProps {
 export function ChatPopup({ conversation, onClose, isOpen }: ChatPopupProps) {
     const [newMessage, setNewMessage] = useState('');
     const [isTyping, setIsTyping] = useState(false);
+    const [isSending, setIsSending] = useState(false);
+    const [messages, setMessages] = useState(conversation.messages);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const [currentUser] = useState({ id: 1, name: 'Junaid Hassan' }); // TODO: Get from auth
+    const { auth } = usePage().props as any;
+    const currentUser = auth?.user || { id: 1, name: 'Junaid Hassan' };
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -44,10 +49,37 @@ export function ChatPopup({ conversation, onClose, isOpen }: ChatPopupProps) {
 
     useEffect(() => {
         scrollToBottom();
-    }, [conversation.messages]);
+    }, [messages]);
+
+    // Listen for new messages via Echo
+    useEffect(() => {
+        if (typeof window !== 'undefined' && (window as any).Echo && isOpen) {
+            const channel = (window as any).Echo.private(`conversation.${conversation.id}`);
+
+            channel.listen('.message.sent', (e: any) => {
+                console.log('New message received:', e);
+                setMessages(prev => [...prev, {
+                    id: e.id,
+                    content: e.content,
+                    sender_name: e.sender_name,
+                    sender_id: e.sender_id,
+                    created_at: e.created_at,
+                    status: e.status,
+                }]);
+            });
+
+            return () => {
+                channel.stopListening('.message.sent');
+                (window as any).Echo.leaveChannel(`conversation.${conversation.id}`);
+            };
+        }
+    }, [conversation.id, isOpen]);
 
     const handleSendMessage = async () => {
-        if (!newMessage.trim()) return;
+        if (!newMessage.trim() || isSending) return;
+
+        setIsSending(true);
+        const messageContent = newMessage.trim();
 
         try {
             const response = await fetch(`/conversations/${conversation.id}/messages`, {
@@ -57,20 +89,24 @@ export function ChatPopup({ conversation, onClose, isOpen }: ChatPopupProps) {
                     'Accept': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
                 },
-                body: JSON.stringify({ content: newMessage }),
+                body: JSON.stringify({ content: messageContent }),
             });
 
             if (response.ok) {
                 setNewMessage('');
-                // TODO: Update messages list or trigger refetch
+                // The new message will be added via Echo event
+            } else {
+                console.error('Failed to send message');
             }
         } catch (error) {
             console.error('Error sending message:', error);
+        } finally {
+            setIsSending(false);
         }
     };
 
     const handleKeyPress = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
+        if (e.key === 'Enter' && !e.shiftKey && !isSending) {
             e.preventDefault();
             handleSendMessage();
         }
@@ -84,9 +120,21 @@ export function ChatPopup({ conversation, onClose, isOpen }: ChatPopupProps) {
             <div className="flex items-center justify-between p-4 border-b bg-gray-50 rounded-t-lg">
                 <div className="flex items-center gap-3">
                     <Avatar className="w-8 h-8">
-                        <AvatarFallback>
-                            {conversation.name.charAt(0).toUpperCase()}
-                        </AvatarFallback>
+                        {conversation.type === 'private' && conversation.participants.length > 0 ? (
+                            <>
+                                <AvatarImage
+                                    src={conversation.participants.find(p => p.id !== 1)?.profile_pic}
+                                    alt={conversation.name}
+                                />
+                                <AvatarFallback>
+                                    {conversation.name.charAt(0).toUpperCase()}
+                                </AvatarFallback>
+                            </>
+                        ) : (
+                            <AvatarFallback>
+                                {conversation.name.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                        )}
                     </Avatar>
                     <div>
                         <div className="font-semibold text-sm">{conversation.name}</div>
@@ -119,7 +167,7 @@ export function ChatPopup({ conversation, onClose, isOpen }: ChatPopupProps) {
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                {conversation.messages.map((message) => (
+                {messages.map((message) => (
                     <div
                         key={message.id}
                         className={`flex ${message.sender_id === currentUser.id ? 'justify-end' : 'justify-start'}`}
@@ -128,12 +176,12 @@ export function ChatPopup({ conversation, onClose, isOpen }: ChatPopupProps) {
                             className={`max-w-xs px-3 py-2 rounded-lg ${
                                 message.sender_id === currentUser.id
                                     ? 'bg-blue-500 text-white'
-                                    : 'bg-gray-100 text-gray-900'
+                                    : 'bg-white text-gray-900 border border-gray-200'
                             }`}
                         >
                             <div className="text-sm">{message.content}</div>
                             <div className={`text-xs mt-1 ${
-                                message.sender_id === currentUser.id ? 'text-blue-100' : 'text-gray-500'
+                                message.sender_id === currentUser.id ? 'text-blue-100' : 'text-gray-400'
                             }`}>
                                 {new Date(message.created_at).toLocaleTimeString([], {
                                     hour: '2-digit',
@@ -150,7 +198,7 @@ export function ChatPopup({ conversation, onClose, isOpen }: ChatPopupProps) {
                 ))}
                 {isTyping && (
                     <div className="flex justify-start">
-                        <div className="bg-gray-100 text-gray-900 px-3 py-2 rounded-lg">
+                        <div className="bg-white text-gray-900 px-3 py-2 rounded-lg border border-gray-200">
                             <div className="text-sm italic">typing...</div>
                         </div>
                     </div>
@@ -170,11 +218,15 @@ export function ChatPopup({ conversation, onClose, isOpen }: ChatPopupProps) {
                     />
                     <Button
                         onClick={handleSendMessage}
-                        disabled={!newMessage.trim()}
+                        disabled={!newMessage.trim() || isSending}
                         size="sm"
-                        className="bg-blue-500 hover:bg-blue-600"
+                        className="bg-blue-500 hover:bg-blue-600 disabled:opacity-50"
                     >
-                        <Send className="h-4 w-4" />
+                        {isSending ? (
+                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        ) : (
+                            <Send className="h-4 w-4" />
+                        )}
                     </Button>
                 </div>
             </div>

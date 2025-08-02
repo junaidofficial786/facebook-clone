@@ -13,3 +13,8 @@ Broadcast::channel('online-users', function ($user) {
         'email' => $user->email,
     ];
 });
+
+Broadcast::channel('conversation.{id}', function ($user, $id) {
+    // Check if user is a participant in this conversation
+    return $user->conversationParticipants()->where('conversation_id', $id)->exists();
+});

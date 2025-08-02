@@ -151,15 +151,27 @@ export function AppHeader() {
                                 <div className="px-3 py-4 text-muted-foreground text-sm">Loading...</div>
                             ) : conversations.length > 0 ? (
                                 conversations.slice(0, 5).map(conversation => (
-                                    <DropdownMenuItem
-                                        key={conversation.id}
+                                                                        <DropdownMenuItem 
+                                        key={conversation.id} 
                                         className="flex items-center gap-3 py-2 cursor-pointer"
                                         onClick={() => openChat(conversation.id)}
                                     >
                                         <Avatar className="w-10 h-10">
-                                            <AvatarFallback>
-                                                {conversation.name.charAt(0).toUpperCase()}
-                                            </AvatarFallback>
+                                            {conversation.type === 'private' && conversation.participants.length > 0 ? (
+                                                <>
+                                                    <AvatarImage 
+                                                        src={conversation.participants.find(p => p.id !== 1)?.profile_pic} 
+                                                        alt={conversation.name} 
+                                                    />
+                                                    <AvatarFallback>
+                                                        {conversation.name.charAt(0).toUpperCase()}
+                                                    </AvatarFallback>
+                                                </>
+                                            ) : (
+                                                <AvatarFallback>
+                                                    {conversation.name.charAt(0).toUpperCase()}
+                                                </AvatarFallback>
+                                            )}
                                         </Avatar>
                                         <div className="flex-1 min-w-0">
                                             <div className="font-medium truncate text-foreground">
