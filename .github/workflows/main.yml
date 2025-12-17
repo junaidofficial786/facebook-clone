@@ -2,7 +2,8 @@ name: Laravel CI
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
 
 jobs:
@@ -29,4 +30,3 @@ jobs:
 
       - name: Run tests
         run: php artisan test
-
